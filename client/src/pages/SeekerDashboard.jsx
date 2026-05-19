@@ -1,16 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { getSocket } from '../utils/socket';
 import { useAuth } from '../hooks/useAuth';
 import SeekerLayout from '../components/SeekerLayout';
-import { Clock, FileText, TrendingUp, XCircle, Briefcase, Building2 } from 'lucide-react';
+import { Clock, FileText, TrendingUp, XCircle, Briefcase, Building2, X, CheckCircle, Info } from 'lucide-react';
+
+const API = 'http://localhost:5000/api';
+
+// --- Toast system ---
+const TOAST_DURATION = 5000;
+
+const Toast = ({ toast, onDismiss }) => {
+  const styles = {
+    hired:     { bg: 'bg-green-50 border-green-300', text: 'text-green-800', icon: <CheckCircle className="h-5 w-5 text-green-500 shrink-0" /> },
+    interview: { bg: 'bg-blue-50 border-blue-300',   text: 'text-blue-800',   icon: <Info className="h-5 w-5 text-blue-500 shrink-0" /> },
+    rejected:  { bg: 'bg-red-50 border-red-300',     text: 'text-red-800',    icon: <XCircle className="h-5 w-5 text-red-400 shrink-0" /> },
+    pending:   { bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800',  icon: <Clock className="h-5 w-5 text-amber-400 shrink-0" /> },
+  };
+
+  const style = styles[toast.status] || styles.pending;
+
+  return (
+    <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg w-80 animate-slide-in ${style.bg}`}>
+      {style.icon}
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold ${style.text}`}>Application Update</p>
+        <p className={`text-xs mt-0.5 ${style.text} opacity-80`}>
+          <span className="font-medium">{toast.jobTitle}</span> — status changed to{' '}
+          <span className="font-bold uppercase">{toast.status}</span>
+        </p>
+      </div>
+      <button onClick={() => onDismiss(toast.id)} className="text-gray-400 hover:text-gray-600 shrink-0">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
+const ToastContainer = ({ toasts, onDismiss }) => (
+  <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+    {toasts.map(t => <Toast key={t.id} toast={t} onDismiss={onDismiss} />)}
+  </div>
+);
 
 const SeekerDashboard = () => {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = useCallback((data) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, ...data }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, TOAST_DURATION);
+  }, []);
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   useEffect(() => {
     if (!user?.token) return;
@@ -18,7 +69,7 @@ const SeekerDashboard = () => {
     const loadApplications = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:5000/api/applications/my-applications', {
+        const res = await axios.get(`${API}/applications/my-applications`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setApplications(res.data || []);
@@ -31,7 +82,7 @@ const SeekerDashboard = () => {
 
     const loadProfile = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/profiles/me', {
+        const res = await axios.get(`${API}/profiles/me`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setProfile(res.data);
@@ -43,21 +94,28 @@ const SeekerDashboard = () => {
     loadApplications();
     loadProfile();
 
-   const socket = getSocket();
-if (!socket) return;
-socket.emit('join_room', user.id);
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit('join_room', user.id);
 
     const handleStatusUpdate = (data) => {
+      // Update application list
       setApplications(prev =>
         prev.map(app =>
           app._id === data.applicationId ? { ...app, status: data.status } : app
         )
       );
+      // Show toast
+      addToast({
+        status: data.status,
+        jobTitle: data.jobTitle || 'A job',
+        applicationId: data.applicationId,
+      });
     };
 
     socket.on('status_update', handleStatusUpdate);
-   return () => socket?.off('status_update', handleStatusUpdate);
-  }, [user]);
+    return () => socket?.off('status_update', handleStatusUpdate);
+  }, [user, addToast]);
 
   const calcCompletion = () => {
     if (!profile) return 0;
@@ -85,10 +143,10 @@ socket.emit('join_room', user.id);
 
   const getStatusBadge = (status) => {
     const styles = {
-      pending: 'bg-amber-50 border border-amber-200 text-amber-700',
+      pending:   'bg-amber-50 border border-amber-200 text-amber-700',
       interview: 'bg-blue-50 border border-blue-200 text-blue-700',
-      hired: 'bg-green-50 border border-green-200 text-green-700',
-      rejected: 'bg-red-50 border border-red-200 text-red-700',
+      hired:     'bg-green-50 border border-green-200 text-green-700',
+      rejected:  'bg-red-50 border border-red-200 text-red-700',
     };
     return (
       <span className={`rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${styles[status] || styles.pending}`}>
@@ -99,6 +157,8 @@ socket.emit('join_room', user.id);
 
   return (
     <SeekerLayout profile={profile}>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -116,9 +176,9 @@ socket.emit('join_room', user.id);
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {[
                 { label: 'Applications', value: totalApplications, icon: <FileText className="h-5 w-5 text-indigo-500" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                { label: 'Interviews', value: interviews, icon: <TrendingUp className="h-5 w-5 text-blue-500" />, color: 'text-blue-600', bg: 'bg-blue-50' },
-                { label: 'Pending', value: pending, icon: <Clock className="h-5 w-5 text-amber-500" />, color: 'text-amber-600', bg: 'bg-amber-50' },
-                { label: 'Rejected', value: rejected, icon: <XCircle className="h-5 w-5 text-red-500" />, color: 'text-red-600', bg: 'bg-red-50' },
+                { label: 'Interviews',   value: interviews,         icon: <TrendingUp className="h-5 w-5 text-blue-500" />,   color: 'text-blue-600',   bg: 'bg-blue-50'   },
+                { label: 'Pending',      value: pending,            icon: <Clock className="h-5 w-5 text-amber-500" />,      color: 'text-amber-600',  bg: 'bg-amber-50'  },
+                { label: 'Rejected',     value: rejected,           icon: <XCircle className="h-5 w-5 text-red-500" />,      color: 'text-red-600',    bg: 'bg-red-50'    },
               ].map((stat, index) => (
                 <div key={index} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                   <div className="mb-3">
