@@ -99,6 +99,8 @@ const SeekerDashboard = () => {
     socket.emit('join_room', user.id);
 
     const handleStatusUpdate = (data) => {
+
+       console.log('socket status_update received:', data);
       // Update application list
       setApplications(prev =>
         prev.map(app =>

@@ -17,12 +17,11 @@ export default function AuthProvider({ children }) {
 
   const loading = false;
 
-  // Handle page refresh — user already logged in
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
     const storedToken = localStorage.getItem('token');
-    if (storedUser?._id && storedToken) {
-      initSocket(storedUser._id, storedToken);
+    if (storedUser?.id && storedToken) {
+      initSocket(storedUser.id, storedToken);
     }
   }, []);
 
@@ -30,7 +29,7 @@ export default function AuthProvider({ children }) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser({ ...userData, token });
-    initSocket(userData._id, token);
+    initSocket(userData.id, token);
   };
 
   const logout = () => {
