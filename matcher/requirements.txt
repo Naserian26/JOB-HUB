@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+spacy
+scikit-learn
+sentence-transformers
+faiss-cpu
+python-dotenv
+requests
