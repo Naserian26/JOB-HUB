@@ -103,13 +103,13 @@ const EmployerDashboard = () => {
   return (
     <EmployerLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-        <p className="text-gray-500 mt-1">Welcome back, {user?.name}. Here's your hiring summary.</p>
+        <h1 className="text-2xl font-bold text-slate-100">Overview</h1>
+        <p className="text-slate-400 mt-1">Welcome back, {user?.name}. Here's your hiring summary.</p>
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-gray-400">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-indigo-500" />
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-700 border-t-lime-accent" />
           Loading dashboard...
         </div>
       ) : (
@@ -117,14 +117,14 @@ const EmployerDashboard = () => {
           {/* Stat cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {statCards.map((s, i) => (
-              <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <div key={i} className="bg-dark-card p-6 rounded-xl shadow-dark-sm border border-dark-border">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">{s.label}</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{s.value}</p>
-                    <p className="text-xs text-gray-400 mt-1">{s.sub}</p>
+                    <p className="text-sm font-medium text-slate-400">{s.label}</p>
+                    <p className="text-3xl font-bold text-slate-100 mt-1">{s.value}</p>
+                    <p className="text-xs text-slate-500 mt-1">{s.sub}</p>
                   </div>
-                  <div className={`p-3 rounded-lg ${s.bg}`}>{s.icon}</div>
+                  <div className="p-3 rounded-lg bg-slate-900">{s.icon}</div>
                 </div>
               </div>
             ))}
@@ -134,24 +134,24 @@ const EmployerDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
             {/* Applications over time */}
-            <div className="md:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <p className="text-sm font-semibold text-gray-700 mb-4">Applications — Last 7 Days</p>
+            <div className="md:col-span-2 bg-dark-card rounded-xl border border-dark-border shadow-dark-sm p-5">
+              <p className="text-sm font-semibold text-slate-100 mb-4">Applications — Last 7 Days</p>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={appsByDay}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  <Line type="monotone" dataKey="applications" stroke="#6366f1" strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0b0f0b', borderRadius: 8, border: '1px solid #23302a', color: '#e2e8f0' }} />
+                  <Line type="monotone" dataKey="applications" stroke="#84cc16" strokeWidth={2} dot={{ r: 4, fill: '#84cc16' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
             {/* Status pie */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <p className="text-sm font-semibold text-gray-700 mb-4">Pipeline Status</p>
+            <div className="bg-dark-card rounded-xl border border-dark-border shadow-dark-sm p-5">
+              <p className="text-sm font-semibold text-slate-100 mb-4">Pipeline Status</p>
               {applications.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-12">No data yet</p>
+                <p className="text-xs text-slate-500 text-center py-12">No data yet</p>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -168,8 +168,8 @@ const EmployerDashboard = () => {
                         <Cell key={index} fill={COLORS[entry.name.toLowerCase()] || '#94a3b8'} />
                       ))}
                     </Pie>
-                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11, color: '#cbd5e1' }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0b0f0b', borderRadius: 8, border: '1px solid #23302a', color: '#e2e8f0' }} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -180,35 +180,35 @@ const EmployerDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
             {/* Match score distribution */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="bg-dark-card rounded-xl border border-dark-border shadow-dark-sm p-5">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-semibold text-gray-700">Match Score Distribution</p>
-                <span className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-1 rounded-full">Avg: {avgScore}%</span>
+                <p className="text-sm font-semibold text-slate-100">Match Score Distribution</p>
+                <span className="text-xs text-black font-semibold bg-lime-accent px-2 py-1 rounded-full">Avg: {avgScore}%</span>
               </div>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={scoreRanges}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0b0f0b', borderRadius: 8, border: '1px solid #23302a', color: '#e2e8f0' }} />
+                  <Bar dataKey="count" fill="#84cc16" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Top jobs by applicants */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <p className="text-sm font-semibold text-gray-700 mb-4">Top Jobs by Applicants</p>
+            <div className="bg-dark-card rounded-xl border border-dark-border shadow-dark-sm p-5">
+              <p className="text-sm font-semibold text-slate-100 mb-4">Top Jobs by Applicants</p>
               {topJobs.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-12">No data yet</p>
+                <p className="text-xs text-slate-500 text-center py-12">No data yet</p>
               ) : (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={topJobs} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                    <YAxis dataKey="title" type="category" tick={{ fontSize: 10, fill: '#94a3b8' }} width={80} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Bar dataKey="count" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="title" type="category" tick={{ fontSize: 10, fill: '#94a3b8' }} width={80} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0b0f0b', borderRadius: 8, border: '1px solid #23302a', color: '#e2e8f0' }} />
+                    <Bar dataKey="count" fill="#84cc16" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -219,27 +219,27 @@ const EmployerDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               to="/employer/manage-jobs"
-              className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition group"
+              className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-dark-sm hover:shadow-dark-md transition group"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-gray-900 text-lg">Applications</h3>
-                  <p className="text-gray-500 text-sm mt-1">Select a job to review its applicants</p>
+                  <h3 className="font-bold text-slate-100 text-lg">Applications</h3>
+                  <p className="text-slate-400 text-sm mt-1">Select a job to review its applicants</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition" />
+                <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-lime-accent transition" />
               </div>
             </Link>
 
             <Link
               to="/employer/manage-jobs"
-              className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition group"
+              className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-dark-sm hover:shadow-dark-md transition group"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-gray-900 text-lg">Manage Jobs</h3>
-                  <p className="text-gray-500 text-sm mt-1">View, edit, or close your posted jobs</p>
+                  <h3 className="font-bold text-slate-100 text-lg">Manage Jobs</h3>
+                  <p className="text-slate-400 text-sm mt-1">View, edit, or close your posted jobs</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition" />
+                <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-lime-accent transition" />
               </div>
             </Link>
           </div>

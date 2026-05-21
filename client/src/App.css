@@ -1,18 +1,38 @@
+/* Premium Dark AI SaaS Theme CSS Variables */
+:root {
+  --bg-primary: #050805;
+  --bg-sidebar: #0A0F0A;
+  --bg-card: #111411;
+  --border-dark: #1C231C;
+  --accent-primary: #9FE870;
+  --accent-hover: #8DDB5A;
+  --text-primary: #F5F5F5;
+  --text-secondary: #9CA3AF;
+  /* Legacy variable mappings for compatibility */
+  --accent: var(--accent-primary);
+  --accent-bg: var(--bg-card);
+  --accent-border: var(--border-dark);
+  --border: var(--border-dark);
+  --text-h: var(--text-primary);
+  --social-bg: var(--bg-card);
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
+  color: var(--accent-primary);
+  background: var(--bg-card);
   border: 2px solid transparent;
   transition: border-color 0.3s;
   margin-bottom: 24px;
 
   &:hover {
-    border-color: var(--accent-border);
+    border-color: var(--accent-hover);
   }
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
   }
 }

@@ -26,31 +26,31 @@ const locations = [
 
 const JobCard = ({ job, matchScore }) => (
   <Link to={`/jobs/${job._id}`} className="block">
-    <div className="bg-white border border-gray-100 rounded-xl p-5 hover:border-indigo-300 hover:shadow-sm transition flex items-center gap-4">
-      <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+    <div className="bg-dark-card border border-dark-border rounded-xl p-5 hover:border-lime-accent hover:shadow-dark-md transition flex items-center gap-4">
+      <div className="w-10 h-10 rounded-lg bg-lime-500/15 border border-lime-500/30 flex items-center justify-center text-lime-200 font-bold text-sm shrink-0">
         {job.employerId?.name?.[0] || '?'}
       </div>
       <div className="flex-1 min-w-0">
-        <h2 className="font-semibold text-gray-900 text-sm mb-1">{job.title}</h2>
-        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+        <h2 className="font-semibold text-slate-100 text-sm mb-1">{job.title}</h2>
+        <div className="flex flex-wrap gap-3 text-xs text-slate-400">
           <span>{job.employerId?.name}</span>
-          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
-          {job.salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{job.salary}</span>}
-          <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{job.category}</span>
+          <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-500" />{job.location}</span>
+          {job.salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-slate-500" />{job.salary}</span>}
+          <span className="flex items-center gap-1"><Briefcase className="w-3 h-3 text-slate-500" />{job.category}</span>
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
         {matchScore !== undefined ? (
           <span className={`text-xs font-bold ${
-            matchScore >= 80 ? 'text-green-600' :
-            matchScore >= 50 ? 'text-amber-500' : 'text-gray-400'
+            matchScore >= 80 ? 'text-lime-300' :
+            matchScore >= 50 ? 'text-amber-400' : 'text-slate-500'
           }`}>{matchScore}% match</span>
         ) : (
-          <span className="bg-indigo-50 text-indigo-700 text-xs font-medium px-3 py-1 rounded-full">
+          <span className="bg-slate-900 text-slate-200 text-xs font-medium px-3 py-1 rounded-full">
             {job.type || 'Full Time'}
           </span>
         )}
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-slate-500">
           {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}
         </span>
       </div>
@@ -153,47 +153,47 @@ const JobListings = () => {
   const activeFilters = selectedCategories.length + selectedLocations.length;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-dark-bg min-h-screen">
 
       {/* Page Header */}
-      <div className="bg-white border-b border-gray-100 py-6 px-4 sticky top-0 z-20">
+      <div className="bg-dark-card border-b border-dark-border py-6 px-4 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-4 md:hidden">
-            <h1 className="text-xl font-bold text-gray-900">Latest Jobs</h1>
+            <h1 className="text-xl font-bold text-slate-100">Latest Jobs</h1>
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="flex items-center gap-2 text-sm font-medium text-indigo-600"
+              className="flex items-center gap-2 text-sm font-medium text-lime-accent"
             >
               <Filter className="w-4 h-4" /> Filters {activeFilters > 0 && `(${activeFilters})`}
             </button>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-4 hidden md:block">Latest Jobs</h1>
+          <h1 className="text-2xl font-bold text-slate-100 mb-4 hidden md:block">Latest Jobs</h1>
 
           <div className="flex gap-3 items-center">
-            <div className="flex items-center gap-2 flex-1 max-w-lg bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-              <Search className="w-4 h-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2 flex-1 max-w-lg bg-dark-sidebar border border-dark-border rounded-lg px-4 py-2">
+              <Search className="w-4 h-4 text-slate-500 shrink-0" />
               <input
                 type="text"
                 placeholder="Job title, skill, or company..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="bg-transparent flex-1 text-sm outline-none text-gray-700 placeholder-gray-400"
+                className="bg-transparent flex-1 text-sm outline-none text-slate-100 placeholder:text-slate-500"
               />
               {search && (
                 <button onClick={() => setSearch('')}>
-                  <X className="w-3 h-3 text-gray-400" />
+                  <X className="w-3 h-3 text-slate-500" />
                 </button>
               )}
             </div>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white outline-none"
+              className="border border-dark-border rounded-lg px-3 py-2 text-sm text-slate-100 bg-dark-card outline-none"
             >
-              <option>Most Recent</option>
-              <option>Most Relevant</option>
-              <option>Highest Salary</option>
+              <option className="bg-dark-card">Most Recent</option>
+              <option className="bg-dark-card">Most Relevant</option>
+              <option className="bg-dark-card">Highest Salary</option>
             </select>
           </div>
 
@@ -203,8 +203,8 @@ const JobListings = () => {
               onClick={() => handleTabChange('all')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 activeTab === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  ? 'bg-lime-accent text-black'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-dark-sidebar'
               }`}
             >
               All Jobs
@@ -214,8 +214,8 @@ const JobListings = () => {
                 onClick={() => handleTabChange('recommended')}
                 className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === 'recommended'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    ? 'bg-lime-accent text-black'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-dark-sidebar'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" /> Recommended
@@ -228,19 +228,19 @@ const JobListings = () => {
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6 relative">
 
         {/* Sidebar */}
-        <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block absolute md:relative top-0 left-4 z-10 w-64 h-fit bg-white md:bg-transparent border md:border-0 border-gray-200 rounded-xl md:rounded-none p-5 md:p-0`}>
-          <div className="bg-white md:border md:border-gray-100 rounded-xl md:p-5 md:sticky md:top-24">
+        <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block absolute md:relative top-0 left-4 z-10 w-64 h-fit bg-dark-card md:bg-transparent border md:border-0 border-dark-border rounded-xl md:rounded-none p-5 md:p-0`}>
+          <div className="bg-dark-card md:border md:border-dark-border rounded-xl md:p-5 md:sticky md:top-24">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-gray-900 text-sm">Filters</h3>
+              <h3 className="font-medium text-slate-100 text-sm">Filters</h3>
               {activeFilters > 0 && (
-                <button onClick={clearAll} className="text-xs text-indigo-600 hover:underline">
+                <button onClick={clearAll} className="text-xs text-lime-accent hover:text-lime-300">
                   Clear all
                 </button>
               )}
             </div>
 
             <div className="mb-5">
-              <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Categories</h4>
+              <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Categories</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
                 {categories.map(cat => (
                   <label key={cat} className="flex items-center gap-2 cursor-pointer group">
@@ -248,9 +248,9 @@ const JobListings = () => {
                       type="checkbox"
                       checked={selectedCategories.includes(cat)}
                       onChange={() => toggle(selectedCategories, setSelectedCategories, cat)}
-                      className="h-3.5 w-3.5 rounded accent-indigo-600"
+                      className="h-3.5 w-3.5 rounded accent-lime-accent"
                     />
-                    <span className={`text-xs ${selectedCategories.includes(cat) ? 'text-indigo-600 font-medium' : 'text-gray-600'}`}>
+                    <span className={`text-xs ${selectedCategories.includes(cat) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
                       {cat}
                     </span>
                   </label>
@@ -259,7 +259,7 @@ const JobListings = () => {
             </div>
 
             <div>
-              <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Locations</h4>
+              <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Locations</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                 {locations.map(loc => (
                   <label key={loc} className="flex items-center gap-2 cursor-pointer">
@@ -267,9 +267,9 @@ const JobListings = () => {
                       type="checkbox"
                       checked={selectedLocations.includes(loc)}
                       onChange={() => toggle(selectedLocations, setSelectedLocations, loc)}
-                      className="h-3.5 w-3.5 rounded accent-indigo-600"
+                      className="h-3.5 w-3.5 rounded accent-lime-accent"
                     />
-                    <span className={`text-xs ${selectedLocations.includes(loc) ? 'text-indigo-600 font-medium' : 'text-gray-600'}`}>
+                    <span className={`text-xs ${selectedLocations.includes(loc) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
                       {loc}
                     </span>
                   </label>
@@ -283,21 +283,21 @@ const JobListings = () => {
         <div className="flex-1">
           {activeTab === 'all' ? (
             <>
-              <p className="text-sm text-gray-500 mb-4">
-                Showing <span className="font-medium text-gray-900">{loading ? '...' : filteredAndSortedJobs.length} jobs</span>
-                {activeFilters > 0 && <span className="text-indigo-600"> · {activeFilters} filter{activeFilters > 1 ? 's' : ''} active</span>}
+              <p className="text-sm text-slate-400 mb-4">
+                Showing <span className="font-medium text-slate-100">{loading ? '...' : filteredAndSortedJobs.length} jobs</span>
+                {activeFilters > 0 && <span className="text-lime-accent"> · {activeFilters} filter{activeFilters > 1 ? 's' : ''} active</span>}
               </p>
 
               {loading ? (
-                <div className="text-center py-16 text-gray-400 text-sm">Loading jobs...</div>
+                <div className="text-center py-16 text-slate-500 text-sm">Loading jobs...</div>
               ) : filteredAndSortedJobs.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
+                <div className="text-center py-16 bg-dark-card rounded-xl border border-dark-border">
                   <div className="text-4xl mb-3">🔍</div>
-                  <h3 className="font-medium text-gray-700 mb-1">No jobs found</h3>
-                  <p className="text-sm text-gray-400 mb-4">Try adjusting your search or filter criteria</p>
+                  <h3 className="font-medium text-slate-100 mb-1">No jobs found</h3>
+                  <p className="text-sm text-slate-400 mb-4">Try adjusting your search or filter criteria</p>
                   <button
                     onClick={clearAll}
-                    className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                    className="bg-lime-accent text-black px-5 py-2 rounded-lg text-sm font-medium hover:bg-lime-accent-hover transition"
                   >
                     Clear all filters
                   </button>
@@ -312,22 +312,22 @@ const JobListings = () => {
             </>
           ) : (
             <>
-              <p className="text-sm text-gray-500 mb-4 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+              <p className="text-sm text-slate-400 mb-4 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-lime-300" />
                 Jobs ranked by your AI match score
               </p>
 
               {recsLoading ? (
                 <div className="text-center py-16">
-                  <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-                  <p className="text-sm text-gray-400">Calculating your matches...</p>
+                  <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-lime-accent" />
+                  <p className="text-sm text-slate-400">Calculating your matches...</p>
                 </div>
               ) : recommendations.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
-                  <Sparkles className="h-10 w-10 text-gray-200 mx-auto mb-3" />
-                  <p className="font-medium text-gray-600">No recommendations yet</p>
-                  <p className="text-sm text-gray-400 mt-1">Complete your profile to get personalized job matches</p>
-                  <Link to="/seeker/profile" className="mt-4 inline-block bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                <div className="text-center py-16 bg-dark-card rounded-xl border border-dark-border">
+                  <Sparkles className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+                  <p className="font-medium text-slate-100">No recommendations yet</p>
+                  <p className="text-sm text-slate-400 mt-1">Complete your profile to get personalized job matches</p>
+                  <Link to="/seeker/profile" className="mt-4 inline-block bg-lime-accent text-black px-5 py-2 rounded-lg text-sm font-medium hover:bg-lime-accent-hover transition">
                     Complete Profile
                   </Link>
                 </div>
