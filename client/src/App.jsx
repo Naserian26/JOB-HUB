@@ -24,7 +24,8 @@ import EmployerApplications from './pages/EmployerApplications';
 
 // Shared
 import Settings from './pages/Settings';
-
+import Companies from './pages/Companies';
+import Applications from './pages/Applications';
 // AUTH
 import { useAuth } from './hooks/useAuth';
 import AuthProvider from './context/AuthProvider';
@@ -90,6 +91,10 @@ function AppRoutes() {
           <Route path="/employer/settings" element={
             <ProtectedRoute role="employer"><Settings /></ProtectedRoute>
           } />
+          <Route path="/companies" element={<Companies />} />
+<Route path="/applications" element={
+  <ProtectedRoute role="seeker"><Applications /></ProtectedRoute>
+} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}

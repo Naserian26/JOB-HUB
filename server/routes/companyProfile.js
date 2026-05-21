@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const CompanyProfile = require('../models/CompanyProfile');
+const Job = require('../models/Job');
 
 const authenticate = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -40,6 +41,26 @@ const uploadLogo = multer({
   },
 });
 
+// GET /api/company-profile/all — public
+router.get('/all', async (req, res) => {
+  try {
+    const profiles = await CompanyProfile.find()
+      .populate('userId', 'name email')
+      .sort('-createdAt');
+
+    const withJobCount = await Promise.all(
+      profiles.map(async (p) => {
+        const jobCount = await Job.countDocuments({ employerId: p.userId._id, status: 'active' });
+        return { ...p.toObject(), jobCount };
+      })
+    );
+
+    res.json(withJobCount);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/company-profile/me
 router.get('/me', authenticate, async (req, res) => {
   try {
@@ -51,7 +72,7 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/company-profile  — create or update
+// POST /api/company-profile — create or update
 router.post('/', authenticate, async (req, res) => {
   try {
     const existing = await CompanyProfile.findOne({ userId: req.user.id });

@@ -198,5 +198,27 @@ router.post('/match-preview', authenticate, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// 8. Check if seeker already applied to a job
+router.get('/check/:jobId', authenticate, async (req, res) => {
+  if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Access denied' });
+  try {
+    const application = await Application.findOne({
+      jobId: req.params.jobId,
+      seekerId: req.user.id,
+    });
+
+    if (!application) {
+      return res.json({ applied: false, status: null, appliedAt: null });
+    }
+
+    return res.json({
+      applied: true,
+      status: application.status,
+      appliedAt: application.createdAt,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;

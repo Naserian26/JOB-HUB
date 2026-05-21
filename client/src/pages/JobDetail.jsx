@@ -1,244 +1,471 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, DollarSign, ArrowLeft, Send, FileText, CheckCircle, Sparkles, Loader2 } from 'lucide-react';
+import {
+  MapPin, DollarSign, ArrowLeft, Send, FileText,
+  CheckCircle, Sparkles, Loader2, Clock, XCircle, UserCheck, Briefcase,
+} from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
 const API = 'http://localhost:5000/api';
 
+// ─── Match Panel ────────────────────────────────────────────────────────────
+
+const SCORE_THEME = (score) =>
+  score >= 80
+    ? { ring: 'ring-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500', score: 'text-emerald-600' }
+    : score >= 50
+    ? { ring: 'ring-amber-200',   bg: 'bg-amber-50',   text: 'text-amber-700',   bar: 'bg-amber-400',   score: 'text-amber-500'  }
+    : { ring: 'ring-red-200',     bg: 'bg-red-50',     text: 'text-red-700',     bar: 'bg-red-400',     score: 'text-red-500'    };
+
+const MatchBar = ({ label, value, barClass }) => (
+  <div className="flex items-center gap-3">
+    <span className="w-20 shrink-0 text-right text-xs text-gray-400">{label}</span>
+    <div className="relative flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+      <div
+        className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${barClass}`}
+        style={{ width: `${value}%` }}
+      />
+    </div>
+    <span className="w-7 text-right text-xs font-semibold text-gray-500">{value}%</span>
+  </div>
+);
+
 const MatchPanel = ({ match }) => {
   if (!match) return null;
-
-  const { match_score, explanation, breakdown } = match;
-
-  const color =
-    match_score >= 80 ? 'green' :
-    match_score >= 50 ? 'amber' : 'red';
-
-  const colorClasses = {
-    green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', bar: 'bg-green-500', score: 'text-green-600' },
-    amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', bar: 'bg-amber-400', score: 'text-amber-500' },
-    red:   { bg: 'bg-red-50',   border: 'border-red-200',   text: 'text-red-700',   bar: 'bg-red-400',   score: 'text-red-500'   },
-  }[color];
+  const { match_score, explanation, breakdown = {} } = match;
+  const t = SCORE_THEME(match_score);
 
   const bars = [
-    { label: 'Skills',     value: breakdown?.skills ?? 0 },
-    { label: 'Semantic',   value: breakdown?.semantic ?? 0 },
-    { label: 'Experience', value: breakdown?.experience ?? 0 },
-    { label: 'Location',   value: breakdown?.location ?? 0 },
-    { label: 'Salary',     value: breakdown?.salary ?? 0 },
+    { label: 'Skills',      value: breakdown.skills     ?? 0 },
+    { label: 'Semantic',    value: breakdown.semantic   ?? 0 },
+    { label: 'Experience',  value: breakdown.experience ?? 0 },
+    { label: 'Location',    value: breakdown.location   ?? 0 },
+    { label: 'Salary',      value: breakdown.salary     ?? 0 },
   ];
 
   return (
-    <div className={`mt-6 rounded-xl border ${colorClasses.border} ${colorClasses.bg} p-5`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className={`h-4 w-4 ${colorClasses.text}`} />
-          <p className={`text-sm font-semibold ${colorClasses.text}`}>Your AI Match Score</p>
-        </div>
-        <span className={`text-2xl font-bold ${colorClasses.score}`}>{match_score}%</span>
+    <div className={`rounded-2xl ring-1 ${t.ring} ${t.bg} p-5 space-y-3`}>
+      <div className="flex items-center justify-between">
+        <span className={`flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${t.text}`}>
+          <Sparkles className="h-3.5 w-3.5" />
+          AI Match Score
+        </span>
+        <span className={`text-3xl font-bold tabular-nums ${t.score}`}>{match_score}%</span>
       </div>
 
-      {/* Breakdown bars */}
-      <div className="space-y-1.5 mb-3">
+      <div className="space-y-1.5">
         {bars.map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-2">
-            <span className="w-20 text-right text-xs text-gray-500">{label}</span>
-            <div className="flex-1 rounded-full bg-white/60 h-1.5 border border-white">
-              <div
-                className={`h-1.5 rounded-full ${colorClasses.bar} transition-all`}
-                style={{ width: `${value}%` }}
-              />
-            </div>
-            <span className="w-8 text-xs font-semibold text-gray-600">{value}%</span>
-          </div>
+          <MatchBar key={label} label={label} value={value} barClass={t.bar} />
         ))}
       </div>
 
       {explanation && (
-        <p className={`text-xs ${colorClasses.text} border-t border-white/50 pt-2 mt-2`}>{explanation}</p>
+        <p className={`text-xs leading-relaxed border-t border-black/5 pt-3 ${t.text}`}>
+          {explanation}
+        </p>
       )}
     </div>
   );
 };
+
+// ─── Application Status Badge ────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  pending:   { Icon: Clock,      label: 'Application Pending',    style: 'bg-amber-50 ring-amber-200 text-amber-700',  dot: 'bg-amber-400'  },
+  reviewed:  { Icon: UserCheck,  label: 'Under Review',           style: 'bg-blue-50 ring-blue-200 text-blue-700',     dot: 'bg-blue-400'   },
+  interview: { Icon: UserCheck,  label: 'Interview Scheduled',    style: 'bg-indigo-50 ring-indigo-200 text-indigo-700', dot: 'bg-indigo-500' },
+  hired:     { Icon: CheckCircle,label: 'Offer Extended 🎉',      style: 'bg-emerald-50 ring-emerald-200 text-emerald-700', dot: 'bg-emerald-500' },
+  rejected:  { Icon: XCircle,    label: 'Not Selected',           style: 'bg-gray-50 ring-gray-200 text-gray-500',     dot: 'bg-gray-300'   },
+};
+
+const ApplicationStatusBadge = ({ status, appliedAt }) => {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  const { Icon, label, style, dot } = cfg;
+  const date = appliedAt
+    ? new Date(appliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
+
+  return (
+    <div className="flex flex-col items-end gap-1 shrink-0">
+      <div className={`flex items-center gap-2 rounded-xl ring-1 px-4 py-2.5 ${style}`}>
+        <span className={`h-2 w-2 rounded-full ${dot}`} />
+        <Icon className="h-4 w-4" />
+        <span className="text-sm font-semibold">{label}</span>
+      </div>
+      {date && <span className="text-xs text-gray-400">Applied {date}</span>}
+    </div>
+  );
+};
+
+// ─── Apply Modal ─────────────────────────────────────────────────────────────
+
+const AVAILABILITY_OPTIONS = [
+  { value: 'immediate', label: 'Immediate' },
+  { value: '2 weeks',   label: '2 weeks notice' },
+  { value: '1 month',   label: '1 month notice' },
+];
+
+const ApplyModal = ({ job, cvUrl, match, onClose, onSuccess }) => {
+  const { user } = useAuth();
+  const headers = useMemo(() => ({ Authorization: `Bearer ${user?.token}` }), [user?.token]);
+
+  const [form, setForm] = useState({ coverLetter: '', expectedSalary: '', availability: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [done, setDone] = useState(false);
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/applications/apply/${job._id}`, { ...form, cvUrl }, { headers });
+      setDone(true);
+      setTimeout(onSuccess, 1400);
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Failed to submit. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const scoreColor =
+    match?.match_score >= 80 ? 'text-emerald-600' :
+    match?.match_score >= 50 ? 'text-amber-500' : 'text-red-500';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl p-7 ring-1 ring-black/5">
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 text-gray-300 hover:text-gray-500 transition-colors text-xl leading-none"
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-0.5">{job.title}</h2>
+        <p className="text-sm text-gray-400 mb-5">{job.employerId?.name ?? job.company}</p>
+
+        {/* CV notice */}
+        <div className={`flex items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-xs mb-4 ring-1 ${
+          cvUrl
+            ? 'bg-emerald-50 ring-emerald-200 text-emerald-700'
+            : 'bg-amber-50 ring-amber-200 text-amber-700'
+        }`}>
+          <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          {cvUrl
+            ? 'CV attached from your profile'
+            : <span>No CV on your profile — <Link to="/seeker/profile" className="underline font-medium">upload one</Link> to strengthen your application.</span>
+          }
+        </div>
+
+        {/* Match pill */}
+        {match && (
+          <div className="flex items-center justify-between rounded-xl bg-gray-50 ring-1 ring-black/5 px-4 py-2.5 mb-5">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+              <Sparkles className="h-3.5 w-3.5" /> Your match score
+            </span>
+            <span className={`text-sm font-bold ${scoreColor}`}>{match.match_score}%</span>
+          </div>
+        )}
+
+        {done ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <CheckCircle className="h-12 w-12 text-emerald-500" />
+            <p className="text-base font-semibold text-gray-800">Application submitted!</p>
+            <p className="text-sm text-gray-400">Redirecting to your dashboard…</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-xl bg-red-50 ring-1 ring-red-200 px-4 py-3 text-xs text-red-600">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Cover Letter
+              </label>
+              <textarea
+                required
+                rows={4}
+                placeholder="Why are you a great fit?"
+                value={form.coverLetter}
+                onChange={set('coverLetter')}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 placeholder:text-gray-300 outline-none focus:border-gray-400 focus:bg-white transition resize-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Expected Salary (USD)
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. $130,000"
+                value={form.expectedSalary}
+                onChange={set('expectedSalary')}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 placeholder:text-gray-300 outline-none focus:border-gray-400 focus:bg-white transition"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Availability
+              </label>
+              <select
+                required
+                value={form.availability}
+                onChange={set('availability')}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 outline-none focus:border-gray-400 focus:bg-white transition"
+              >
+                <option value="">Select availability</option>
+                {AVAILABILITY_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>
+                : <><span>Submit Application</span><Send className="h-4 w-4" /></>
+              }
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Job Detail (main) ───────────────────────────────────────────────────────
 
 const JobDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [job, setJob] = useState(null);
+  const headers = useMemo(
+    () => ({ Authorization: `Bearer ${user?.token}` }),
+    [user?.token]
+  );
+
+  const isSeeker = user?.role === 'seeker';
+
+  // Job
+  const [job,        setJob]        = useState(null);
   const [jobLoading, setJobLoading] = useState(true);
-  const [jobError, setJobError] = useState(null);
+  const [jobError,   setJobError]   = useState(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ coverLetter: '', expectedSalary: '', availability: '' });
-  const [cvUrl, setCvUrl] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  // Existing application
+  const [existingApp,    setExistingApp]    = useState(null);
+  const [appCheckLoading, setAppCheckLoading] = useState(false);
 
-  const [match, setMatch] = useState(null);
+  // Match
+  const [match,        setMatch]        = useState(null);
   const [matchLoading, setMatchLoading] = useState(false);
 
-  const headers = { Authorization: `Bearer ${user?.token}` };
+  // CV
+  const [cvUrl, setCvUrl] = useState(null);
 
-  // Load job
+  // Modal
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // ── Fetch job ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchJob = async () => {
+    if (!id) return;
+    (async () => {
       try {
         setJobLoading(true);
-        const res = await axios.get(`${API}/jobs/${id}`);
-        setJob(res.data);
+        const { data } = await axios.get(`${API}/jobs/${id}`);
+        setJob(data);
       } catch {
         setJobError('Job not found or has been removed.');
       } finally {
         setJobLoading(false);
       }
-    };
-    if (id) fetchJob();
+    })();
   }, [id]);
 
-  // Load seeker profile + calculate match preview
+  // ── Check existing application ─────────────────────────────────────────────
   useEffect(() => {
-    if (!user?.token || user?.role !== 'seeker' || !job) return;
-    const fetchProfileAndMatch = async () => {
+    if (!isSeeker || !user?.token || !id) return;
+    (async () => {
       try {
-        const res = await axios.get(`${API}/profiles/me`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        const profile = res.data;
-        setCvUrl(profile?.cvUrl || null);
+        setAppCheckLoading(true);
+        const { data } = await axios.get(`${API}/applications/check/${id}`, { headers });
+        setExistingApp(data);
+      } catch {
+        setExistingApp(null);
+      } finally {
+        setAppCheckLoading(false);
+      }
+    })();
+  }, [id, isSeeker, user?.token, headers]);
 
-        // Calculate match preview
+  // ── Fetch profile + match preview ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isSeeker || !user?.token || !job) return;
+    (async () => {
+      try {
+        const { data: profile } = await axios.get(`${API}/profiles/me`, { headers });
+        setCvUrl(profile?.cvUrl ?? null);
+
         setMatchLoading(true);
-        const matchRes = await axios.post(
+        const { data: matchData } = await axios.post(
           `${API}/applications/match-preview`,
           { jobId: id },
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          { headers }
         );
-        setMatch(matchRes.data);
+        setMatch(matchData);
       } catch {
-        // Match preview is non-critical — fail silently
+        // non-critical
       } finally {
         setMatchLoading(false);
       }
-    };
-    fetchProfileAndMatch();
-  }, [user?.token, user?.role, job, id]);
+    })();
+  }, [isSeeker, user?.token, job, id, headers]);
 
-  const handleOpenModal = () => {
-    setSubmitError(null);
-    setSuccess(false);
-    setFormData({ coverLetter: '', expectedSalary: '', availability: '' });
-    setIsModalOpen(true);
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleApplySuccess = () => {
+    setExistingApp({ applied: true, status: 'pending', appliedAt: new Date().toISOString() });
+    setModalOpen(false);
+    navigate('/seeker/dashboard');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
-    setSubmitting(true);
-    try {
-      await axios.post(
-        `${API}/applications/apply/${id}`,
-        { ...formData, cvUrl },
-        { headers }
-      );
-      setSuccess(true);
-      setTimeout(() => {
-        setIsModalOpen(false);
-        navigate('/seeker/dashboard');
-      }, 1500);
-    } catch (err) {
-      setSubmitError(err.response?.data?.message || 'Failed to submit application. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
+  // ── States ────────────────────────────────────────────────────────────────
   if (jobLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
       </div>
     );
   }
 
   if (jobError || !job) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-4">
-        <p className="text-gray-500">{jobError}</p>
-        <Link to="/jobs" className="text-indigo-600 hover:underline">← Back to Listings</Link>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-4 text-center px-4">
+        <p className="text-gray-400">{jobError}</p>
+        <Link to="/jobs" className="text-sm text-gray-600 underline underline-offset-2 hover:text-gray-900">
+          ← Back to listings
+        </Link>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+  const alreadyApplied = existingApp?.applied === true;
 
-        <Link to="/jobs" className="mb-6 inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800">
-          <ArrowLeft className="h-4 w-4" /> Back to Listings
+  return (
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+
+        {/* Back link */}
+        <Link
+          to="/jobs"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to listings
         </Link>
 
-        <div className="rounded-xl bg-white p-8 shadow-md">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        {/* Main card */}
+        <div className="rounded-3xl bg-white shadow-sm ring-1 ring-black/5 p-8 space-y-7">
+
+          {/* Header row */}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{job.title}</h1>
-              <p className="mt-2 text-xl text-gray-700">{job.employerId?.name || job.company}</p>
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">{job.title}</h1>
+              <p className="mt-1.5 text-base text-gray-500">{job.employerId?.name ?? job.company}</p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
                 {job.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" /> {job.location}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
+                    <MapPin className="h-3 w-3" /> {job.location}
                   </span>
                 )}
                 {job.salary && (
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" /> {job.salary}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
+                    <DollarSign className="h-3 w-3" /> {job.salary}
+                  </span>
+                )}
+                {job.type && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
+                    <Briefcase className="h-3 w-3" /> {job.type}
                   </span>
                 )}
               </div>
             </div>
 
-            {user?.role === 'seeker' && (
-              <button
-                onClick={handleOpenModal}
-                className="shrink-0 rounded-lg bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-indigo-700"
-              >
-                Apply Now
-              </button>
+            {/* Seeker CTA */}
+            {isSeeker && (
+              appCheckLoading ? (
+                <div className="shrink-0 flex items-center gap-2 text-xs text-gray-300">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking…
+                </div>
+              ) : alreadyApplied ? (
+                <ApplicationStatusBadge status={existingApp.status} appliedAt={existingApp.appliedAt} />
+              ) : (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="shrink-0 rounded-2xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700"
+                >
+                  Apply now
+                </button>
+              )
             )}
           </div>
 
-          {/* Match panel — seeker only */}
-          {user?.role === 'seeker' && (
+          {/* Match panel */}
+          {isSeeker && (
             matchLoading ? (
-              <div className="mt-6 flex items-center gap-2 text-sm text-gray-400">
-                <Loader2 className="h-4 w-4 animate-spin" /> Calculating your match score...
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Calculating your match score…
               </div>
             ) : (
               <MatchPanel match={match} />
             )
           )}
 
-          <hr className="my-8" />
+          <hr className="border-gray-100" />
 
+          {/* Description */}
           {job.description ? (
             <div
-              className="ql-editor prose max-w-none text-gray-700"
+              className="ql-editor prose prose-sm max-w-none text-gray-600 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: job.description }}
             />
           ) : (
-            <p className="text-gray-500">No description provided.</p>
+            <p className="text-sm text-gray-400">No description provided.</p>
           )}
 
+          {/* Requirements */}
           {job.requirements?.length > 0 && (
-            <div className="mt-8">
-              <h3 className="mb-3 text-lg font-bold text-gray-800">Requirements</h3>
+            <div>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                Requirements
+              </h3>
               <div className="flex flex-wrap gap-2">
-                {job.requirements.map(req => (
-                  <span key={req} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                {job.requirements.map((req) => (
+                  <span
+                    key={req}
+                    className="rounded-lg bg-gray-50 ring-1 ring-gray-200 px-3 py-1 text-xs text-gray-600"
+                  >
                     {req}
                   </span>
                 ))}
@@ -248,110 +475,15 @@ const JobDetail = () => {
         </div>
       </div>
 
-      {/* Apply Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
-            >
-              ✕
-            </button>
-
-            <h2 className="mb-1 text-2xl font-bold text-gray-900">Apply for {job.title}</h2>
-            <p className="mb-5 text-sm text-gray-500">{job.employerId?.name || job.company}</p>
-
-            {/* CV status */}
-            <div className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
-              cvUrl
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}>
-              <FileText className="h-4 w-4 shrink-0" />
-              {cvUrl
-                ? <span>CV attached from your profile</span>
-                : <span>No CV on your profile — <Link to="/seeker/profile" className="underline font-medium">upload one</Link> to strengthen your application.</span>
-              }
-            </div>
-
-            {/* Match score summary in modal */}
-            {match && (
-              <div className="mb-4 flex items-center justify-between rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-2">
-                <span className="text-xs text-indigo-600 font-medium flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5" /> Your match score
-                </span>
-                <span className={`text-sm font-bold ${
-                  match.match_score >= 80 ? 'text-green-600' :
-                  match.match_score >= 50 ? 'text-amber-500' : 'text-red-500'
-                }`}>{match.match_score}%</span>
-              </div>
-            )}
-
-            {success ? (
-              <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <CheckCircle className="h-12 w-12 text-green-500" />
-                <p className="text-lg font-semibold text-gray-800">Application submitted!</p>
-                <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {submitError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {submitError}
-                  </div>
-                )}
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Cover Letter</label>
-                  <textarea
-                    required
-                    rows={4}
-                    placeholder="Why are you a good fit?"
-                    value={formData.coverLetter}
-                    onChange={e => setFormData({ ...formData, coverLetter: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 p-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Expected Salary (USD)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="$130,000"
-                    value={formData.expectedSalary}
-                    onChange={e => setFormData({ ...formData, expectedSalary: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 p-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Availability</label>
-                  <select
-                    required
-                    value={formData.availability}
-                    onChange={e => setFormData({ ...formData, availability: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 p-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                  >
-                    <option value="">Select availability</option>
-                    <option value="immediate">Immediate</option>
-                    <option value="2 weeks">2 weeks notice</option>
-                    <option value="1 month">1 month notice</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 font-bold text-white transition hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Submitting...' : <><span>Submit Application</span><Send className="h-4 w-4" /></>}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
+      {/* Apply modal */}
+      {modalOpen && !alreadyApplied && (
+        <ApplyModal
+          job={job}
+          cvUrl={cvUrl}
+          match={match}
+          onClose={() => setModalOpen(false)}
+          onSuccess={handleApplySuccess}
+        />
       )}
     </div>
   );
