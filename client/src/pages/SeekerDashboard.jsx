@@ -4,11 +4,10 @@ import axios from 'axios';
 import { getSocket } from '../utils/socket';
 import { useAuth } from '../hooks/useAuth';
 import SeekerLayout from '../components/SeekerLayout';
-import { Clock, FileText, TrendingUp, XCircle, Briefcase, Building2, X, CheckCircle, Info } from 'lucide-react';
+import { Clock, FileText, TrendingUp, XCircle, Briefcase, Building2, X, CheckCircle, Info, MapPin, DollarSign, Sparkles } from 'lucide-react';
 
 const API = 'http://localhost:5000/api';
 
-// --- Toast system ---
 const TOAST_DURATION = 5000;
 
 const Toast = ({ toast, onDismiss }) => {
@@ -18,9 +17,7 @@ const Toast = ({ toast, onDismiss }) => {
     rejected:  { bg: 'bg-red-50 border-red-300',     text: 'text-red-800',    icon: <XCircle className="h-5 w-5 text-red-400 shrink-0" /> },
     pending:   { bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800',  icon: <Clock className="h-5 w-5 text-amber-400 shrink-0" /> },
   };
-
   const style = styles[toast.status] || styles.pending;
-
   return (
     <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg w-80 animate-slide-in ${style.bg}`}>
       {style.icon}
@@ -50,13 +47,13 @@ const SeekerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(false);
 
   const addToast = useCallback((data) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, ...data }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, TOAST_DURATION);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), TOAST_DURATION);
   }, []);
 
   const dismissToast = useCallback((id) => {
@@ -86,28 +83,54 @@ const SeekerDashboard = () => {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setProfile(res.data);
+        return res.data;
       } catch {
-        // 404 = no profile yet
+        return null;
+      }
+    };
+
+    const loadRecommendations = async (profile) => {
+      if (!profile) return;
+      setRecsLoading(true);
+      try {
+        const jobsRes = await axios.get(`${API}/jobs`);
+        const jobs = jobsRes.data;
+
+        const scored = await Promise.all(
+          jobs.slice(0, 10).map(async (job) => {
+            try {
+              const matchRes = await axios.post(
+                `${API}/applications/match-preview`,
+                { jobId: job._id },
+                { headers: { Authorization: `Bearer ${user.token}` } }
+              );
+              return { ...job, matchScore: matchRes.data.match_score };
+            } catch {
+              return { ...job, matchScore: 0 };
+            }
+          })
+        );
+
+        const top3 = scored.filter(j => j.matchScore >= 40).sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
+        setRecommendations(top3);
+      } catch (err) {
+        console.error('Failed to load recommendations', err);
+      } finally {
+        setRecsLoading(false);
       }
     };
 
     loadApplications();
-    loadProfile();
+    loadProfile().then(loadRecommendations);
 
     const socket = getSocket();
     if (!socket) return;
     socket.emit('join_room', user.id);
 
     const handleStatusUpdate = (data) => {
-
-       console.log('socket status_update received:', data);
-      // Update application list
       setApplications(prev =>
-        prev.map(app =>
-          app._id === data.applicationId ? { ...app, status: data.status } : app
-        )
+        prev.map(app => app._id === data.applicationId ? { ...app, status: data.status } : app)
       );
-      // Show toast
       addToast({
         status: data.status,
         jobTitle: data.jobTitle || 'A job',
@@ -172,9 +195,9 @@ const SeekerDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-
-          {/* Left */}
           <div className="space-y-6 xl:col-span-2">
+
+            {/* Stats */}
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {[
                 { label: 'Applications', value: totalApplications, icon: <FileText className="h-5 w-5 text-indigo-500" />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -192,6 +215,64 @@ const SeekerDashboard = () => {
               ))}
             </div>
 
+            {/* Recommendations */}
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <h2 className="font-bold text-gray-800">Recommended for You</h2>
+                </div>
+                <Link to="/jobs" className="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                  View All →
+                </Link>
+              </div>
+
+              {recsLoading ? (
+                <div className="p-8 text-center">
+                  <div className="mb-2 inline-block h-6 w-6 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+                  <p className="text-xs text-gray-400">Finding best matches...</p>
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Briefcase className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">Complete your profile to get recommendations</p>
+                  <Link to="/seeker/profile" className="mt-2 inline-block text-xs text-indigo-600 hover:underline">
+                    Complete Profile →
+                  </Link>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {recommendations.map(job => (
+                    <div key={job._id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+                        {job.employerId?.name?.[0] || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm">{job.title}</p>
+                        <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-0.5">
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>
+                          {job.salary && <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />{job.salary}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className={`text-xs font-bold ${
+                          job.matchScore >= 80 ? 'text-green-600' :
+                          job.matchScore >= 50 ? 'text-amber-500' : 'text-gray-400'
+                        }`}>{job.matchScore}% match</span>
+                        <Link
+                          to={`/jobs/${job._id}`}
+                          className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Applications table */}
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/50 px-6 py-4">
                 <h2 className="font-bold text-gray-800">Latest Applications</h2>
@@ -305,7 +386,6 @@ const SeekerDashboard = () => {
               </Link>
             </div>
           </div>
-
         </div>
       </div>
     </SeekerLayout>

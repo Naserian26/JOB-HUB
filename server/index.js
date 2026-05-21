@@ -11,6 +11,7 @@ const jobRoutes = require('./routes/jobs');
 const applicationRoutes = require('./routes/applications');
 const profileRoutes = require('./routes/profiles');
 const companyProfileRoutes = require('./routes/companyProfile');
+const notificationsRouter = require('./routes/notifications');
 // Load environment variables
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use('/uploads', express.static('uploads'));
     app.use('/api/applications', applicationRoutes);
     app.use('/api/profiles', profileRoutes);
 app.use('/api/company-profile', companyProfileRoutes);
+app.use('/api/notifications', notificationsRouter);
     // 5. Health Check
     app.get('/', (req, res) => {
       res.send('JobHub API Running');

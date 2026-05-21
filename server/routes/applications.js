@@ -3,6 +3,7 @@ const router = express.Router();
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const Profile = require('../models/Profile');
+const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
 const { getIO } = require('../utils/socket');
 const { calculateMatch } = require('../utils/matcherHelper');
@@ -93,6 +94,14 @@ router.put('/status/:applicationId', authenticate, async (req, res) => {
       jobTitle: application.jobId.title
     });
 
+    // Save persistent notification
+    await Notification.create({
+      userId: application.seekerId,
+      message: `Your application status changed to ${status}`,
+      jobTitle: application.jobId.title,
+      status,
+    });
+
     res.json(application);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -154,7 +163,8 @@ router.get('/employer/all', authenticate, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Match Preview (Seeker)
+
+// 7. Match Preview (Seeker)
 router.post('/match-preview', authenticate, async (req, res) => {
   if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Access denied' });
   try {
@@ -188,6 +198,5 @@ router.post('/match-preview', authenticate, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 module.exports = router;
