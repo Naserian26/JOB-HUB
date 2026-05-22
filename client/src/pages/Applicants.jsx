@@ -4,9 +4,10 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import {
   Download, ArrowLeft, Users, ChevronDown, ChevronUp,
-  LayoutGrid, List, MessageSquare,
+  LayoutGrid, List, MessageSquare, Calendar,
 } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
+import ScheduleModal from '../components/ScheduleModal';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip,
@@ -37,12 +38,8 @@ const ScoreRing = ({ score }) => {
         <circle cx="15" cy="15" r={r} fill="none" stroke="#1e293b" strokeWidth="2.5" />
         <circle
           cx="15" cy="15" r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
+          fill="none" stroke={color} strokeWidth="2.5"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-slate-300">
@@ -76,17 +73,13 @@ const MatchRadar = ({ breakdown, explanation }) => {
               <PolarGrid stroke="#334155" />
               <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#94a3b8' }} />
               <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#64748b' }} />
-              <Radar
-                name="Match" dataKey="value"
-                stroke="#a3e635" fill="#a3e635" fillOpacity={0.15} strokeWidth={2}
-              />
+              <Radar name="Match" dataKey="value" stroke="#a3e635" fill="#a3e635" fillOpacity={0.15} strokeWidth={2} />
               <Tooltip
                 formatter={(v) => [`${v}%`, 'Score']}
                 contentStyle={{ fontSize: 12, borderRadius: 8, background: '#1e293b', border: '1px solid #334155', color: '#f1f5f9' }}
               />
             </RadarChart>
           </ResponsiveContainer>
-
           <div className="mt-2 space-y-1.5">
             {data.map(({ subject, value }) => (
               <div key={subject} className="flex items-center gap-2">
@@ -94,8 +87,7 @@ const MatchRadar = ({ breakdown, explanation }) => {
                 <div className="flex-1 rounded-full bg-slate-800 h-1.5">
                   <div
                     className={`h-1.5 rounded-full transition-all ${
-                      value >= 70 ? 'bg-lime-400' :
-                      value >= 40 ? 'bg-amber-400' : 'bg-red-400'
+                      value >= 70 ? 'bg-lime-400' : value >= 40 ? 'bg-amber-400' : 'bg-red-400'
                     }`}
                     style={{ width: `${value}%` }}
                   />
@@ -104,7 +96,6 @@ const MatchRadar = ({ breakdown, explanation }) => {
               </div>
             ))}
           </div>
-
           {explanation && (
             <p className="mt-3 text-xs text-slate-500 italic border-t border-dark-border pt-2">
               {explanation}
@@ -120,24 +111,20 @@ const MatchRadar = ({ breakdown, explanation }) => {
 
 // ─── Kanban Card ──────────────────────────────────────────────────────────────
 
-const KanbanCard = ({ app, onStatusChange, onMessage }) => {
+const KanbanCard = ({ app, onStatusChange, onMessage, onSchedule }) => {
   const [expanded, setExpanded] = useState(false);
   const accentCol = COLUMNS.find(c => c.key === app.status)?.accent ?? 'bg-gray-500';
+  const canSchedule = !['hired', 'rejected'].includes(app.status);
 
   return (
     <div className="rounded-xl border border-dark-border bg-dark-card overflow-hidden">
-
-      {/* Status accent bar */}
       <div className={`h-0.5 w-full ${accentCol}`} />
-
       <div className="p-4 space-y-3">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-semibold text-slate-100 text-sm truncate">
-              {app.seekerId?.name || '—'}
-            </p>
+            <p className="font-semibold text-slate-100 text-sm truncate">{app.seekerId?.name || '—'}</p>
             <p className="text-xs text-slate-500 truncate">{app.seekerId?.email || ''}</p>
           </div>
           <ScoreRing score={app.matchScore ?? 0} />
@@ -145,26 +132,28 @@ const KanbanCard = ({ app, onStatusChange, onMessage }) => {
 
         {/* Cover letter */}
         {app.coverLetter && (
-          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-            {app.coverLetter}
-          </p>
+          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{app.coverLetter}</p>
         )}
 
         {/* Actions row */}
         <div className="flex items-center justify-between pt-1 border-t border-dark-border">
           {app.cvUrl ? (
-            <a
-              href={app.cvUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition"
-            >
+            <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition">
               <Download className="h-3.5 w-3.5" /> CV
             </a>
           ) : (
             <span className="text-xs text-slate-700">No CV</span>
           )}
           <div className="flex items-center gap-2">
+            {canSchedule && (
+              <button
+                onClick={() => onSchedule(app)}
+                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition font-medium"
+              >
+                <Calendar className="h-3.5 w-3.5" /> Schedule
+              </button>
+            )}
             <button
               onClick={() => onMessage(app)}
               className="flex items-center gap-1 text-xs text-lime-500 hover:text-lime-400 transition font-medium"
@@ -177,16 +166,13 @@ const KanbanCard = ({ app, onStatusChange, onMessage }) => {
             >
               {expanded
                 ? <><ChevronUp className="h-3.5 w-3.5" /> Hide</>
-                : <><ChevronDown className="h-3.5 w-3.5" /> Breakdown</>
-              }
+                : <><ChevronDown className="h-3.5 w-3.5" /> Breakdown</>}
             </button>
           </div>
         </div>
 
         {/* Radar */}
-        {expanded && (
-          <MatchRadar breakdown={app.matchBreakdown} explanation={app.matchExplanation} />
-        )}
+        {expanded && <MatchRadar breakdown={app.matchBreakdown} explanation={app.matchExplanation} />}
 
         {/* Status move buttons */}
         <div className="flex flex-wrap gap-1">
@@ -208,27 +194,21 @@ const KanbanCard = ({ app, onStatusChange, onMessage }) => {
 
 // ─── Kanban Board ─────────────────────────────────────────────────────────────
 
-const KanbanBoard = ({ applicants, onStatusChange, onMessage }) => (
+const KanbanBoard = ({ applicants, onStatusChange, onMessage, onSchedule }) => (
   <div className="grid grid-cols-4 gap-4">
     {COLUMNS.map(col => {
       const cards = applicants.filter(a => a.status === col.key);
       return (
         <div key={col.key} className="rounded-xl bg-dark-bg p-3">
-
-          {/* Column header */}
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-2">
               <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${col.dot}`} />
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-                {col.label}
-              </p>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{col.label}</p>
             </div>
             <span className="text-[10px] text-slate-600 font-medium bg-dark-card border border-dark-border rounded-full px-2 py-0.5">
               {cards.length}
             </span>
           </div>
-
-          {/* Cards */}
           <div className="space-y-3">
             {cards.length === 0 ? (
               <div className="rounded-lg border border-dashed border-dark-border py-8 text-center">
@@ -241,11 +221,11 @@ const KanbanBoard = ({ applicants, onStatusChange, onMessage }) => (
                   app={app}
                   onStatusChange={onStatusChange}
                   onMessage={onMessage}
+                  onSchedule={onSchedule}
                 />
               ))
             )}
           </div>
-
         </div>
       );
     })}
@@ -259,11 +239,12 @@ const Applicants = () => {
   const navigate   = useNavigate();
   const { user }   = useAuth();
 
-  const [applicants,  setApplicants]  = useState([]);
-  const [jobTitle,    setJobTitle]    = useState('');
-  const [loading,     setLoading]     = useState(true);
-  const [expandedId,  setExpandedId]  = useState(null);
-  const [view,        setView]        = useState('kanban');
+  const [applicants,    setApplicants]    = useState([]);
+  const [jobTitle,      setJobTitle]      = useState('');
+  const [loading,       setLoading]       = useState(true);
+  const [expandedId,    setExpandedId]    = useState(null);
+  const [view,          setView]          = useState('kanban');
+  const [schedulingApp, setSchedulingApp] = useState(null);
 
   useEffect(() => {
     if (!user?.token || !jobId) return;
@@ -294,9 +275,7 @@ const Applicants = () => {
   }, [jobId, user?.token, navigate]);
 
   const handleStatusChange = async (id, newStatus) => {
-    setApplicants(prev =>
-      prev.map(app => app._id === id ? { ...app, status: newStatus } : app)
-    );
+    setApplicants(prev => prev.map(app => app._id === id ? { ...app, status: newStatus } : app));
     try {
       await axios.put(
         `${API}/applications/status/${id}`,
@@ -314,6 +293,14 @@ const Applicants = () => {
     const name       = encodeURIComponent(app.seekerId?.name || 'Applicant');
     const job        = encodeURIComponent(app.jobId?.title || jobTitle || '');
     navigate(`/messages?appId=${app._id}&seekerId=${seekerId}&employerId=${employerId}&name=${name}&job=${job}`);
+  };
+
+  const handleScheduled = (interview) => {
+    setApplicants(prev =>
+      prev.map(app =>
+        app._id === interview.application ? { ...app, status: 'interview' } : app
+      )
+    );
   };
 
   const getStatusStyle = (status) => ({
@@ -344,15 +331,11 @@ const Applicants = () => {
             {applicants.length} candidate{applicants.length !== 1 ? 's' : ''}
           </p>
         </div>
-
-        {/* View toggle */}
         <div className="flex items-center gap-1 bg-dark-card border border-dark-border rounded-lg p-1">
           <button
             onClick={() => setView('table')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              view === 'table'
-                ? 'bg-dark-bg text-slate-100 shadow-sm'
-                : 'text-slate-500 hover:text-slate-300'
+              view === 'table' ? 'bg-dark-bg text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-300'
             }`}
           >
             <List className="h-3.5 w-3.5" /> Table
@@ -360,9 +343,7 @@ const Applicants = () => {
           <button
             onClick={() => setView('kanban')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              view === 'kanban'
-                ? 'bg-dark-bg text-slate-100 shadow-sm'
-                : 'text-slate-500 hover:text-slate-300'
+              view === 'kanban' ? 'bg-dark-bg text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-300'
             }`}
           >
             <LayoutGrid className="h-3.5 w-3.5" /> Kanban
@@ -387,6 +368,7 @@ const Applicants = () => {
           applicants={applicants}
           onStatusChange={handleStatusChange}
           onMessage={handleMessage}
+          onSchedule={setSchedulingApp}
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-dark-border bg-dark-card">
@@ -409,20 +391,14 @@ const Applicants = () => {
                       <p className="font-semibold text-slate-100">{app.seekerId?.name || '—'}</p>
                       <p className="text-xs text-slate-500">{app.seekerId?.email || ''}</p>
                     </td>
-                    <td className="px-6 py-4">
-                      <ScoreRing score={app.matchScore ?? 0} />
-                    </td>
+                    <td className="px-6 py-4"><ScoreRing score={app.matchScore ?? 0} /></td>
                     <td className="px-6 py-4 max-w-xs">
                       <p className="truncate text-xs text-slate-400">{app.coverLetter || '—'}</p>
                     </td>
                     <td className="px-6 py-4">
                       {app.cvUrl ? (
-                        <a
-                          href={app.cvUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition"
-                        >
+                        <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition">
                           <Download className="h-4 w-4" /> Download
                         </a>
                       ) : (
@@ -444,6 +420,12 @@ const Applicants = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <button
+                          onClick={() => setSchedulingApp(app)}
+                          className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition font-medium"
+                        >
+                          <Calendar className="h-3.5 w-3.5" /> Schedule
+                        </button>
+                        <button
                           onClick={() => handleMessage(app)}
                           className="flex items-center gap-1 text-xs text-lime-500 hover:text-lime-400 transition font-medium"
                         >
@@ -455,8 +437,7 @@ const Applicants = () => {
                         >
                           {expandedId === app._id
                             ? <><ChevronUp className="h-4 w-4" /> Hide</>
-                            : <><ChevronDown className="h-4 w-4" /> View</>
-                          }
+                            : <><ChevronDown className="h-4 w-4" /> View</>}
                         </button>
                       </div>
                     </td>
@@ -473,6 +454,15 @@ const Applicants = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Schedule modal */}
+      {schedulingApp && (
+        <ScheduleModal
+          application={schedulingApp}
+          onClose={() => setSchedulingApp(null)}
+          onScheduled={handleScheduled}
+        />
       )}
 
     </EmployerLayout>

@@ -48,7 +48,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Forgot Password
+// Forgot Password — sends a clickable reset link to the user's email
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -68,12 +68,33 @@ router.post('/forgot-password', async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Password Reset',
-      text: `Reset your password using this token: ${token}`
+      html: `
+        <p>Reset your JobHub password:</p>
+        <a href="${process.env.CLIENT_URL}/reset-password?token=${token}">Reset Password</a>
+        <p>Expires in 15 minutes.</p>
+      `
     });
 
     res.json({ message: 'Reset link sent to email' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password — validates the token from the link and saves the new password
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(400).json({ message: 'User not found' });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid or expired token' });
   }
 });
 

@@ -3,8 +3,7 @@ const router = express.Router();
 const Interview = require('../models/Interview');
 const Application = require('../models/Application');
 const { authenticate } = require('../middleware/authenticate');
-const { authorizeRoles } = require('../middleware/authorizeRoles');
-
+const authorizeRoles = require('../middleware/authorizeRoles');
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const sendInterviewMessage = async (io, recipientId, payload) => {

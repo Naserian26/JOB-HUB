@@ -222,9 +222,9 @@ const SeekerDashboard = () => {
                   <Sparkles className="h-4 w-4 text-lime-accent" />
                   <h2 className="font-bold text-slate-100">Recommended for You</h2>
                 </div>
-                <Link to="/jobs" className="text-xs font-medium text-lime-accent hover:text-lime-300">
-                  View All →
-                </Link>
+             <Link to="/seeker/applications" className="text-xs font-medium text-lime-accent hover:text-lime-300">
+  View All →
+</Link>
               </div>
 
               {recsLoading ? (

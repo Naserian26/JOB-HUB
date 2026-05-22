@@ -13,6 +13,7 @@ const profileRoutes = require('./routes/profiles');
 const companyProfileRoutes = require('./routes/companyProfile');
 const notificationsRouter = require('./routes/notifications');
 const messagesRouter = require('./routes/messages');
+const interviewsRouter = require('./routes/interviews');
 // Load environment variables
 dotenv.config();
 
@@ -62,6 +63,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/company-profile', companyProfileRoutes);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/interviews', interviewsRouter);
     // 5. Health Check
     app.get('/', (req, res) => {
       res.send('JobHub API Running');

@@ -26,6 +26,9 @@ import Messages from './pages/Messages';
 import Settings from './pages/Settings';
 import Companies from './pages/Companies';
 import Applications from './pages/Applications';
+import InterviewCalendar from './pages/InterviewCalendar';
+import SeekerApplications from './pages/SeekerApplications';
+import ResetPassword from './pages/ResetPassword';
 // AUTH
 import { useAuth } from './hooks/useAuth';
 import AuthProvider from './context/AuthProvider';
@@ -101,6 +104,10 @@ function AppRoutes() {
 <Route path="/messages" element={
   <ProtectedRoute><Messages /></ProtectedRoute>
 } />
+
+<Route path="/employer/interviews" element={<InterviewCalendar />} />
+<Route path="/seeker/applications" element={<SeekerApplications />} />
+<Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}
