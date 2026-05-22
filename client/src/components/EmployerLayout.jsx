@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LayoutDashboard, ClipboardList, Briefcase, Plus, Bell, LogOut, Building2, Settings, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Briefcase, Plus, Bell, LogOut, Building2, Settings, ChevronDown,MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 const EmployerLayout = ({ children }) => {
@@ -17,6 +17,7 @@ const EmployerLayout = ({ children }) => {
   { path: '/employer/dashboard', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
   { path: '/employer/applications', label: 'Applications', icon: <ClipboardList className="w-4 h-4" /> },
   { path: '/employer/manage-jobs', label: 'Manage Jobs', icon: <Briefcase className="w-4 h-4" /> },
+  { path: '/messages',              label: 'Messages',      icon: <MessageSquare className="w-4 h-4" /> },
 ];
 
   const accountItems = [

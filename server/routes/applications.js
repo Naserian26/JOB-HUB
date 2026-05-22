@@ -94,7 +94,6 @@ router.put('/status/:applicationId', authenticate, async (req, res) => {
       jobTitle: application.jobId.title
     });
 
-    // Save persistent notification
     await Notification.create({
       userId: application.seekerId,
       message: `Your application status changed to ${status}`,
@@ -198,6 +197,7 @@ router.post('/match-preview', authenticate, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 // 8. Check if seeker already applied to a job
 router.get('/check/:jobId', authenticate, async (req, res) => {
   if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Access denied' });
@@ -217,6 +217,142 @@ router.get('/check/:jobId', authenticate, async (req, res) => {
       appliedAt: application.createdAt,
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 9. Employer Response Rate (Public)
+router.get('/response-rate/:employerId', async (req, res) => {
+  try {
+    const total = await Application.countDocuments({ employerId: req.params.employerId });
+    if (total === 0) return res.json({ rate: null, total: 0, responded: 0 });
+
+    const responded = await Application.countDocuments({
+      employerId: req.params.employerId,
+      status: { $ne: 'pending' }
+    });
+
+    const rate = Math.round((responded / total) * 100);
+    res.json({ rate, total, responded });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10. CV Score (Seeker) - scores profile readiness against a specific job
+router.get('/cv-score/:jobId', authenticate, async (req, res) => {
+  if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Access denied' });
+  try {
+    const job = await Job.findById(req.params.jobId);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    const profile = await Profile.findOne({ userId: req.user.id });
+    if (!profile) return res.status(404).json({ message: 'Profile not found. Complete your profile first.' });
+
+    // --- 1. Skills score ---
+    const jobText = `${job.title} ${job.description}`.toLowerCase();
+    const seekerSkills = profile.skills || [];
+    const matchedSkills = seekerSkills.filter(s => jobText.includes(s.toLowerCase()));
+    const missingSkills = seekerSkills.filter(s => !jobText.includes(s.toLowerCase()));
+    const skillsScore = seekerSkills.length
+      ? Math.round((matchedSkills.length / seekerSkills.length) * 100)
+      : 0;
+
+    // --- 2. Experience score ---
+    const expMap = { 'Entry': 1, 'Junior': 2, 'Mid': 3, 'Senior': 4, 'Lead': 5, 'Manager': 5 };
+    const seekerExp = expMap[profile.experience] ?? 2;
+    const jobExp    = expMap[job.experienceLevel]  ?? 2;
+    const expScore  = seekerExp >= jobExp
+      ? 100
+      : Math.round((seekerExp / jobExp) * 100);
+
+    // --- 3. Location score ---
+    const isRemote = job.location?.toLowerCase().includes('remote');
+    const locationMatch = profile.location?.toLowerCase() === job.location?.toLowerCase();
+    const locationScore = (!job.location || isRemote || locationMatch) ? 100 : 50;
+
+    // --- 4. Salary score ---
+    let salaryScore = 100;
+    if (profile.salaryExpectation && job.salaryMax) {
+      if (profile.salaryExpectation <= job.salaryMax)            salaryScore = 100;
+      else if (profile.salaryExpectation <= job.salaryMax * 1.15) salaryScore = 65;
+      else                                                         salaryScore = 30;
+    }
+
+    // --- 5. CV completeness score ---
+    const cvScore = profile.cvUrl ? 100 : 40;
+
+    // --- Weighted overall ---
+    const overall = Math.round(
+      skillsScore   * 0.40 +
+      expScore      * 0.25 +
+      salaryScore   * 0.15 +
+      locationScore * 0.10 +
+      cvScore       * 0.10
+    );
+
+    // --- Human-readable signals ---
+    const signals = [
+      {
+        key: 'skills',
+        label: 'Skill match',
+        score: skillsScore,
+        detail: matchedSkills.length
+          ? `${matchedSkills.length} of ${seekerSkills.length} skills match this role`
+          : 'No skills on your profile match this role yet',
+      },
+      {
+        key: 'experience',
+        label: 'Experience level',
+        score: expScore,
+        detail: expScore === 100
+          ? `Your experience meets the ${job.experienceLevel} requirement`
+          : `Role needs ${job.experienceLevel} level — consider highlighting relevant projects`,
+      },
+      {
+        key: 'salary',
+        label: 'Salary alignment',
+        score: salaryScore,
+        detail: salaryScore === 100
+          ? 'Your expectation is within the listed range'
+          : salaryScore === 65
+          ? 'Your expectation is slightly above range — still competitive'
+          : 'Your expectation exceeds the range — may affect shortlisting',
+      },
+      {
+        key: 'location',
+        label: 'Location fit',
+        score: locationScore,
+        detail: locationScore === 100
+          ? isRemote ? 'Remote role — no location conflict' : 'Location matches'
+          : `Role is based in ${job.location} — your profile shows ${profile.location || 'no location'}`,
+      },
+      {
+        key: 'cv',
+        label: 'CV attached',
+        score: cvScore,
+        detail: profile.cvUrl
+          ? 'CV is on your profile and will be sent with your application'
+          : 'No CV uploaded — add one to your profile to boost your chances',
+      },
+    ];
+
+    res.json({
+      overall,
+      breakdown: {
+        skills:     skillsScore,
+        experience: expScore,
+        salary:     salaryScore,
+        location:   locationScore,
+        cv:         cvScore,
+      },
+      signals,
+      matchedSkills,
+      missingSkills,
+      hasCv: !!profile.cvUrl,
+    });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });

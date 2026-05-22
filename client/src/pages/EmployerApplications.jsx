@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { Users, Download } from 'lucide-react';
+import { Users, Download, MessageSquare } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
 
 const API = 'http://localhost:5000/api';
@@ -16,20 +16,22 @@ const EmployerApplications = () => {
 
   useEffect(() => {
     if (!user?.token) return;
+    let cancelled = false;
     const fetchAll = async () => {
       try {
         const res = await axios.get(`${API}/applications/employer/all`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setApplications(res.data);
+        if (!cancelled) setApplications(res.data);
       } catch (err) {
         console.error('Error fetching applications', err);
         if (err.response?.status === 401) navigate('/login');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchAll();
+    return () => { cancelled = true; };
   }, [user?.token, navigate]);
 
   const handleStatusChange = async (id, newStatus) => {
@@ -47,15 +49,20 @@ const EmployerApplications = () => {
     }
   };
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'pending':  return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'interview': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'hired':    return 'bg-green-100 text-green-800 border-green-200';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      default:         return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const handleMessage = (app) => {
+    const seekerId   = app.seekerId?._id || app.seekerId;
+    const employerId = user.id;
+    const name       = encodeURIComponent(app.seekerId?.name || 'Applicant');
+    const job        = encodeURIComponent(app.jobId?.title || '');
+    navigate(`/messages?appId=${app._id}&seekerId=${seekerId}&employerId=${employerId}&name=${name}&job=${job}`);
   };
+
+  const getStatusStyle = (status) => ({
+    pending:   'bg-gray-100 text-gray-800 border-gray-200',
+    interview: 'bg-blue-100 text-blue-800 border-blue-200',
+    hired:     'bg-green-100 text-green-800 border-green-200',
+    rejected:  'bg-red-100 text-red-800 border-red-200',
+  }[status] ?? 'bg-gray-100 text-gray-800 border-gray-200');
 
   const filtered = filter === 'all'
     ? applications
@@ -66,10 +73,11 @@ const EmployerApplications = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{applications.length} total candidate{applications.length !== 1 ? 's' : ''} across all jobs</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {applications.length} total candidate{applications.length !== 1 ? 's' : ''} across all jobs
+          </p>
         </div>
 
-        {/* Filter tabs */}
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 text-sm">
           {['all', 'pending', 'interview', 'hired', 'rejected'].map(f => (
             <button
@@ -109,6 +117,7 @@ const EmployerApplications = () => {
                 <th className="px-6 py-4">Cover Letter</th>
                 <th className="px-6 py-4">CV</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -158,6 +167,14 @@ const EmployerApplications = () => {
                       <option value="hired">Hired</option>
                       <option value="rejected">Rejected</option>
                     </select>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => handleMessage(app)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 hover:text-indigo-700 transition"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> Message
+                    </button>
                   </td>
                 </tr>
               ))}

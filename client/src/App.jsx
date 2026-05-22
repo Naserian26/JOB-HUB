@@ -21,7 +21,7 @@ import Applicants from './pages/Applicants';
 import ManageJobs from './pages/ManageJobs';
 import CompanyProfile from './pages/CompanyProfile';
 import EmployerApplications from './pages/EmployerApplications';
-
+import Messages from './pages/Messages';
 // Shared
 import Settings from './pages/Settings';
 import Companies from './pages/Companies';
@@ -41,9 +41,12 @@ const ProtectedRoute = ({ children, role }) => {
 function AppRoutes() {
   const location = useLocation();
 
-  const hideNavbar = ['/', '/login', '/register', '/forgot-password'];
-  const hideFooter = location.pathname.startsWith('/employer') || location.pathname.startsWith('/seeker');
-  const showNavbar = !hideNavbar.includes(location.pathname);
+  const hideNavbar = ['/', '/login', '/register', '/forgot-password', '/messages'];
+  const hideFooter = location.pathname.startsWith('/employer') || location.pathname.startsWith('/seeker') || location.pathname.startsWith('/messages');
+ const showNavbar = !hideNavbar.includes(location.pathname)
+  && !location.pathname.startsWith('/employer')
+  && !location.pathname.startsWith('/seeker')
+  && location.pathname !== '/messages';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -94,6 +97,9 @@ function AppRoutes() {
           <Route path="/companies" element={<Companies />} />
 <Route path="/applications" element={
   <ProtectedRoute role="seeker"><Applications /></ProtectedRoute>
+} />
+<Route path="/messages" element={
+  <ProtectedRoute><Messages /></ProtectedRoute>
 } />
         </Routes>
       </main>
