@@ -29,7 +29,7 @@ const ScoreRing = ({ score }) => {
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
   const color =
-    score >= 70 ? '#a3e635' :
+    score >= 70 ? '#f97316' :
     score >= 40 ? '#fbbf24' : '#f87171';
 
   return (
@@ -71,9 +71,9 @@ const MatchRadar = ({ breakdown, explanation }) => {
           <ResponsiveContainer width="100%" height={200}>
             <RadarChart data={data}>
               <PolarGrid stroke="#334155" />
-              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#a8a29e' }} />
               <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#64748b' }} />
-              <Radar name="Match" dataKey="value" stroke="#a3e635" fill="#a3e635" fillOpacity={0.15} strokeWidth={2} />
+              <Radar name="Match" dataKey="value" stroke="#f97316" fill="#f97316" fillOpacity={0.15} strokeWidth={2} />
               <Tooltip
                 formatter={(v) => [`${v}%`, 'Score']}
                 contentStyle={{ fontSize: 12, borderRadius: 8, background: '#1e293b', border: '1px solid #334155', color: '#f1f5f9' }}

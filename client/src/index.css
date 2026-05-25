@@ -3,16 +3,8 @@
 @import "tailwindcss";
 
 /* Premium Dark AI SaaS Theme - Global Styles */
-:root {
-  --bg-primary: #050805;
-  --bg-sidebar: #0A0F0A;
-  --bg-card: #111411;
-  --border-dark: #1C231C;
-  --accent-primary: #9FE870;
-  --accent-hover: #8DDB5A;
-  --text-primary: #F5F5F5;
-  --text-secondary: #9CA3AF;
-}
+@import './styles/theme.css';
+
 
 * {
   font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

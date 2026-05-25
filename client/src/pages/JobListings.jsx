@@ -24,6 +24,59 @@ const locations = [
   "Uasin Gishu", "Vihiga", "Wajir", "West Pokot", "Remote",
 ];
 
+// ─── Shared Filter Panel ─────────────────────────────────────────────────────
+const FilterPanel = ({ selectedCategories, setSelectedCategories, selectedLocations, setSelectedLocations, activeFilters, clearAll, toggle }) => (
+  <>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="font-medium text-slate-100 text-sm">Filters</h3>
+      {activeFilters > 0 && (
+        <button onClick={clearAll} className="text-xs text-lime-accent hover:text-lime-300">
+          Clear all
+        </button>
+      )}
+    </div>
+
+    <div className="mb-5">
+      <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Categories</h4>
+      <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+        {categories.map(cat => (
+          <label key={cat} className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={selectedCategories.includes(cat)}
+              onChange={() => toggle(selectedCategories, setSelectedCategories, cat)}
+              className="h-3.5 w-3.5 rounded accent-lime-accent"
+            />
+            <span className={`text-xs ${selectedCategories.includes(cat) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
+              {cat}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div>
+      <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Locations</h4>
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+        {locations.map(loc => (
+          <label key={loc} className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedLocations.includes(loc)}
+              onChange={() => toggle(selectedLocations, setSelectedLocations, loc)}
+              className="h-3.5 w-3.5 rounded accent-lime-accent"
+            />
+            <span className={`text-xs ${selectedLocations.includes(loc) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
+              {loc}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  </>
+);
+
+// ─── Job Card ────────────────────────────────────────────────────────────────
 const JobCard = ({ job, matchScore }) => (
   <Link to={`/jobs/${job._id}`} className="block">
     <div className="bg-dark-card border border-dark-border rounded-xl p-5 hover:border-lime-accent hover:shadow-dark-md transition flex items-center gap-4">
@@ -58,6 +111,7 @@ const JobCard = ({ job, matchScore }) => (
   </Link>
 );
 
+// ─── Main Component ──────────────────────────────────────────────────────────
 const JobListings = () => {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
@@ -67,10 +121,25 @@ const JobListings = () => {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [sortBy, setSortBy] = useState('Most Recent');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'recommended'
+  const [activeTab, setActiveTab] = useState('all');
   const [recommendations, setRecommendations] = useState([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [recsLoaded, setRecsLoaded] = useState(false);
+  
+  // SCROLL STATE
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -115,16 +184,11 @@ const JobListings = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'recommended' && !recsLoaded) {
-      loadRecommendations();
-    }
+    if (tab === 'recommended' && !recsLoaded) loadRecommendations();
   };
 
-  const toggle = (list, setList, value) => {
-    setList(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    );
-  };
+  const toggle = (list, setList, value) =>
+    setList(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
 
   const clearAll = () => {
     setSelectedCategories([]);
@@ -141,37 +205,48 @@ const JobListings = () => {
       const matchesLoc = selectedLocations.length === 0 || selectedLocations.includes(job.location);
       return matchesSearch && matchesCat && matchesLoc;
     });
-
-    if (sortBy === 'Most Recent') {
-      return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    } else if (sortBy === 'Highest Salary') {
-      return result.sort((a, b) => (b.salary || 0) - (a.salary || 0));
-    }
+    if (sortBy === 'Most Recent') result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    else if (sortBy === 'Highest Salary') result.sort((a, b) => (b.salary || 0) - (a.salary || 0));
     return result;
   }, [jobs, search, selectedCategories, selectedLocations, sortBy]);
 
   const activeFilters = selectedCategories.length + selectedLocations.length;
 
+  const filterProps = {
+    selectedCategories, setSelectedCategories,
+    selectedLocations, setSelectedLocations,
+    activeFilters, clearAll, toggle,
+  };
+
   return (
     <div className="bg-dark-bg min-h-screen">
 
-      {/* Page Header */}
-      <div className="bg-dark-card border-b border-dark-border py-6 px-4 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-4 md:hidden">
-            <h1 className="text-xl font-bold text-slate-100">Latest Jobs</h1>
+      {/* ── Sticky Header (Fixed Z-Index and Spacing) ───────────────────── */}
+      <div className={`
+        sticky top-0 z-40 transition-all duration-300 border-b
+        ${isScrolled 
+          ? 'bg-dark-bg/95 backdrop-blur-md border-white/5 shadow-lg py-3' 
+          : 'bg-dark-card border-dark-border py-6'
+        }
+      `}>
+        <div className={`max-w-7xl mx-auto px-4 transition-all duration-300 ${isScrolled ? 'space-y-2' : 'space-y-4'}`}>
+
+          {/* Title row */}
+          <div className={`flex items-center justify-between transition-all duration-300 overflow-hidden ${isScrolled ? 'h-0 opacity-0 m-0' : 'h-auto opacity-100 mb-2'}`}>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-100">Latest Jobs</h1>
+            {/* Mobile filter toggle */}
             <button
-              onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="flex items-center gap-2 text-sm font-medium text-lime-accent"
+              onClick={() => setShowMobileFilters(v => !v)}
+              className="md:hidden flex items-center gap-2 text-sm font-medium text-lime-accent"
             >
-              <Filter className="w-4 h-4" /> Filters {activeFilters > 0 && `(${activeFilters})`}
+              <Filter className="w-4 h-4" />
+              Filters {activeFilters > 0 && `(${activeFilters})`}
             </button>
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-100 mb-4 hidden md:block">Latest Jobs</h1>
-
+          {/* Search + sort */}
           <div className="flex gap-3 items-center">
-            <div className="flex items-center gap-2 flex-1 max-w-lg bg-dark-sidebar border border-dark-border rounded-lg px-4 py-2">
+            <div className="flex items-center gap-2 flex-1 max-w-lg bg-dark-sidebar border border-dark-border rounded-lg px-4 py-2 focus-within:border-lime-accent/50 transition">
               <Search className="w-4 h-4 text-slate-500 shrink-0" />
               <input
                 type="text"
@@ -182,23 +257,25 @@ const JobListings = () => {
               />
               {search && (
                 <button onClick={() => setSearch('')}>
-                  <X className="w-3 h-3 text-slate-500" />
+                  <X className="w-3 h-3 text-slate-500 hover:text-slate-300" />
                 </button>
               )}
             </div>
+            
+            {/* FIXED DROPDOWN STYLES: Explicit text color and background for visibility */}
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="border border-dark-border rounded-lg px-3 py-2 text-sm text-slate-100 bg-dark-card outline-none"
+              className="border border-dark-border rounded-lg text-sm text-slate-100 bg-slate-800 outline-none cursor-pointer"
             >
-              <option className="bg-dark-card">Most Recent</option>
-              <option className="bg-dark-card">Most Relevant</option>
-              <option className="bg-dark-card">Highest Salary</option>
+              <option value="Most Recent" className="text-slate-100 bg-slate-800">Most Recent</option>
+              <option value="Most Relevant" className="text-slate-100 bg-slate-800">Most Relevant</option>
+              <option value="Highest Salary" className="text-slate-100 bg-slate-800">Highest Salary</option>
             </select>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-4">
+          <div className="flex gap-1">
             <button
               onClick={() => handleTabChange('all')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
@@ -225,62 +302,27 @@ const JobListings = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6 relative">
+      {/* ── Mobile Filter Drawer ──────────────────────────────────────────── */}
+      {showMobileFilters && (
+        <div className="md:hidden bg-dark-card border-b border-dark-border px-4 py-5">
+          <FilterPanel {...filterProps} />
+        </div>
+      )}
 
-        {/* Sidebar */}
-        <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block absolute md:relative top-0 left-4 z-10 w-64 h-fit bg-dark-card md:bg-transparent border md:border-0 border-dark-border rounded-xl md:rounded-none p-5 md:p-0`}>
-          <div className="bg-dark-card md:border md:border-dark-border rounded-xl md:p-5 md:sticky md:top-24">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-slate-100 text-sm">Filters</h3>
-              {activeFilters > 0 && (
-                <button onClick={clearAll} className="text-xs text-lime-accent hover:text-lime-300">
-                  Clear all
-                </button>
-              )}
-            </div>
+      {/* ── Page Body 
+          Added pt-10 (padding-top) to ensure content doesn't hide behind the sticky header
+      ─────────────────────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 pt-10 pb-6 flex gap-6 items-start">
 
-            <div className="mb-5">
-              <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Categories</h4>
-              <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                {categories.map(cat => (
-                  <label key={cat} className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(cat)}
-                      onChange={() => toggle(selectedCategories, setSelectedCategories, cat)}
-                      className="h-3.5 w-3.5 rounded accent-lime-accent"
-                    />
-                    <span className={`text-xs ${selectedCategories.includes(cat) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
-                      {cat}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Locations</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                {locations.map(loc => (
-                  <label key={loc} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedLocations.includes(loc)}
-                      onChange={() => toggle(selectedLocations, setSelectedLocations, loc)}
-                      className="h-3.5 w-3.5 rounded accent-lime-accent"
-                    />
-                    <span className={`text-xs ${selectedLocations.includes(loc) ? 'text-lime-accent font-medium' : 'text-slate-400'}`}>
-                      {loc}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:block w-64 shrink-0">
+          <div className="sticky top-32 bg-dark-card border border-dark-border rounded-xl p-5">
+            <FilterPanel {...filterProps} />
           </div>
         </aside>
 
-        {/* Job Results */}
-        <div className="flex-1">
+        {/* ── Job Results ─────────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0">
           {activeTab === 'all' ? (
             <>
               <p className="text-sm text-slate-400 mb-4">

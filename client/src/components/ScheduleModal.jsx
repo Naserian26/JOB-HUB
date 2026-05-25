@@ -171,7 +171,7 @@ export default function ScheduleModal({ application, onClose, onScheduled }) {
           z-index: 1000; padding: 1rem;
         }
         .modal-box {
-          background: #fff; border-radius: 14px;
+          background: #1c1917; border-radius: 14px;
           width: 100%; max-width: 520px;
           box-shadow: 0 8px 32px rgba(0,0,0,0.15);
           display: flex; flex-direction: column;
@@ -181,19 +181,19 @@ export default function ScheduleModal({ application, onClose, onScheduled }) {
           display: flex; align-items: flex-start;
           justify-content: space-between;
           padding: 1.25rem 1.5rem 1rem;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid #292524;
         }
-        .modal-title { font-size: 16px; font-weight: 600; margin: 0 0 2px; color: #111; }
-        .modal-subtitle { font-size: 13px; color: #888; margin: 0; }
+        .modal-title { font-size: 16px; font-weight: 600; margin: 0 0 2px; color: #fafaf9; }
+        .modal-subtitle { font-size: 13px; color: #a8a29e; margin: 0; }
         .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
         .modal-footer {
           padding: 1rem 1.5rem;
-          border-top: 1px solid #f0f0f0;
+          border-top: 1px solid #292524;
           display: flex; gap: 10px; justify-content: flex-end;
         }
         .section-label {
           display: flex; align-items: center; gap: 6px;
-          font-size: 12px; font-weight: 600; color: #555;
+          font-size: 12px; font-weight: 600; color: #a8a29e;
           text-transform: uppercase; letter-spacing: 0.04em;
           margin-bottom: 10px;
         }
@@ -202,17 +202,17 @@ export default function ScheduleModal({ application, onClose, onScheduled }) {
           display: flex; align-items: center; gap: 8px;
         }
         .slot-input {
-          border: 1px solid #e2e2e2; border-radius: 8px;
-          padding: 7px 10px; font-size: 13px; color: #222;
-          outline: none; transition: border 0.15s;
+          border: 1px solid #292524; border-radius: 8px;
+          padding: 7px 10px; font-size: 13px; color: #fafaf9;
+          background: #292524; outline: none; transition: border 0.15s;
         }
-        .slot-input:focus { border-color: #6c63ff; }
+        .slot-input:focus { border-color: #f97316; }
         .date-input { flex: 1.4; }
         .time-input { flex: 1; }
-        .slot-sep { font-size: 13px; color: #aaa; }
+        .slot-sep { font-size: 13px; color: #a8a29e; }
         .add-slot-btn {
           display: flex; align-items: center; gap: 5px;
-          font-size: 13px; color: #6c63ff; background: none;
+          font-size: 13px; color: #f97316; background: none;
           border: none; cursor: pointer; padding: 4px 0;
           margin-bottom: 1.25rem;
         }
@@ -221,37 +221,37 @@ export default function ScheduleModal({ application, onClose, onScheduled }) {
         .field-row { display: flex; flex-direction: column; gap: 5px; }
         .field-label {
           display: flex; align-items: center; gap: 5px;
-          font-size: 12px; font-weight: 600; color: #555;
+          font-size: 12px; font-weight: 600; color: #a8a29e;
         }
         .field-input {
-          border: 1px solid #e2e2e2; border-radius: 8px;
-          padding: 8px 12px; font-size: 13px; color: #222;
-          outline: none; transition: border 0.15s;
+          border: 1px solid #292524; border-radius: 8px;
+          padding: 8px 12px; font-size: 13px; color: #fafaf9;
+          background: #292524; outline: none; transition: border 0.15s;
           font-family: inherit;
         }
-        .field-input:focus { border-color: #6c63ff; }
+        .field-input:focus { border-color: #f97316; }
         .notes-input { resize: vertical; min-height: 72px; }
         .error-msg { font-size: 13px; color: #e53e3e; margin-top: 10px; }
         .icon-btn {
           background: none; border: none; cursor: pointer;
-          color: #999; border-radius: 6px; padding: 4px;
+          color: #a8a29e; border-radius: 6px; padding: 4px;
           display: flex; align-items: center;
         }
-        .icon-btn:hover { background: #f5f5f5; color: #333; }
-        .icon-btn.danger:hover { background: #fff5f5; color: #e53e3e; }
+        .icon-btn:hover { background: #292524; color: #fafaf9; }
+        .icon-btn.danger:hover { background: rgba(245,101,101,0.06); color: #e53e3e; }
         .btn-primary {
-          background: #6c63ff; color: #fff; border: none;
+          background: #f97316; color: #0c0a09; border: none;
           border-radius: 8px; padding: 9px 20px;
           font-size: 14px; font-weight: 500; cursor: pointer;
         }
-        .btn-primary:hover { background: #5a52d5; }
+        .btn-primary:hover { background: #ea580c; }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-secondary {
-          background: #f5f5f5; color: #555; border: none;
+          background: transparent; color: #a8a29e; border: 1px solid #292524;
           border-radius: 8px; padding: 9px 20px;
           font-size: 14px; font-weight: 500; cursor: pointer;
         }
-        .btn-secondary:hover { background: #ebebeb; }
+        .btn-secondary:hover { border-color: #f97316; color: #f97316; }
       `}</style>
     </div>
   );

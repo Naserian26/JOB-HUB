@@ -16,4 +16,12 @@ export default defineConfig({
   include: [
     'src/context/**/*.js', 
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      }
+    }
+  }
 })

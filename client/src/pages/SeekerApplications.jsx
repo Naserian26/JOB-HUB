@@ -7,7 +7,7 @@ const STATUS_COLORS = {
   pending:   { bg: '#faeeda', color: '#854f0b', label: 'Applied' },
   reviewed:  { bg: '#eeedfe', color: '#3c3489', label: 'Reviewed' },
   interview: { bg: '#e6f1fb', color: '#185fa5', label: 'Interview' },
-  offered:   { bg: '#eaf3de', color: '#3b6d11', label: 'Offered' },
+  offered:   { bg: 'rgba(249,115,22,0.15)', color: '#f97316', label: 'Offered' },
   rejected:  { bg: '#fcebeb', color: '#a32d2d', label: 'Rejected' },
   withdrawn: { bg: '#f1efe8', color: '#5f5e5a', label: 'Withdrawn' },
 };
@@ -15,7 +15,7 @@ const STATUS_COLORS = {
 const INTERVIEW_STATUS = {
   proposed:    { bg: '#eeedfe', color: '#3c3489', label: 'Pick a slot' },
   rescheduled: { bg: '#faeeda', color: '#854f0b', label: 'New slots available' },
-  confirmed:   { bg: '#eaf3de', color: '#3b6d11', label: 'Confirmed' },
+  confirmed:   { bg: 'rgba(249,115,22,0.15)', color: '#f97316', label: 'Confirmed' },
   cancelled:   { bg: '#fcebeb', color: '#a32d2d', label: 'Cancelled' },
   completed:   { bg: '#f1efe8', color: '#5f5e5a', label: 'Completed' },
 };
@@ -261,7 +261,7 @@ export default function SeekerApplications() {
           font-size: 11px; font-weight: 500;
           padding: 3px 10px; border-radius: 20px;
         }
-        .iv-link { font-size: 13px; color: #6c63ff; text-decoration: none; }
+        .iv-link { font-size: 13px; color: #f97316; text-decoration: none; }
         .iv-link:hover { text-decoration: underline; }
         .iv-location { font-size: 12px; color: #888; margin: 0; display: flex; align-items: center; gap: 4px; }
         .iv-notes { font-size: 13px; color: #666; margin: 0; line-height: 1.5; }
@@ -276,18 +276,18 @@ export default function SeekerApplications() {
           background: #fff; cursor: pointer;
           transition: border-color 0.15s, background 0.15s;
         }
-        .slot-btn:hover { border-color: #6c63ff; background: #f7f5ff; }
+        .slot-btn:hover { border-color: #f97316; background: rgba(249,115,22,0.08); }
         .slot-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .slot-date { font-size: 12px; font-weight: 600; color: #222; }
-        .slot-time { font-size: 12px; color: #6c63ff; }
+        .slot-time { font-size: 12px; color: #f97316; }
 
         .confirmed-slot {
           display: flex; align-items: center; gap: 10px;
-          background: #eaf3de; border-radius: 10px; padding: 10px 14px;
+          background: rgba(249,115,22,0.15); border-radius: 10px; padding: 10px 14px;
         }
-        .confirmed-icon { color: #3b6d11; flex-shrink: 0; }
-        .confirmed-date { font-size: 13px; font-weight: 600; color: #3b6d11; display: block; }
-        .confirmed-time { font-size: 12px; color: #3b6d11; }
+        .confirmed-icon { color: #f97316; flex-shrink: 0; }
+        .confirmed-date { font-size: 13px; font-weight: 600; color: #f97316; display: block; }
+        .confirmed-time { font-size: 12px; color: #f97316; }
 
         .cancelled-notice {
           display: flex; align-items: center; gap: 8px;

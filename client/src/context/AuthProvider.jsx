@@ -5,12 +5,13 @@ import { initSocket, disconnectSocket } from '../utils/socket';
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const storedUser = localStorage.getItem('user');
+      const raw = localStorage.getItem('user');
       const storedToken = localStorage.getItem('token');
-      if (!storedUser || !storedToken) return null;
-      return { ...JSON.parse(storedUser), token: storedToken };
-    } catch (error) {
-      console.error('Failed to parse user from localStorage:', error);
+      if (!raw || raw === 'undefined' || !storedToken) return null;
+      return { ...JSON.parse(raw), token: storedToken };
+   } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
       return null;
     }
   });
@@ -18,10 +19,16 @@ export default function AuthProvider({ children }) {
   const loading = false;
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    const storedToken = localStorage.getItem('token');
-    if (storedUser?.id && storedToken) {
-      initSocket(storedUser.id, storedToken);
+    try {
+      const raw = localStorage.getItem('user');
+      const storedUser = raw && raw !== 'undefined' ? JSON.parse(raw) : null;
+      const storedToken = localStorage.getItem('token');
+      if (storedUser?.id && storedToken) {
+        initSocket(storedUser.id, storedToken);
+      }
+    } catch  {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
   }, []);
 

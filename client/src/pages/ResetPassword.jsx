@@ -31,7 +31,7 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${API}/auth/reset-password`, { token, password });
+     await axios.post(`${API}/auth/reset-password`, { token, newPassword: password });
       setDone(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
@@ -81,7 +81,7 @@ const ResetPassword = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min. 6 characters"
-                  style={{ color: '#111827' }}
+                  style={{ color: '#fafaf9' }}
                   className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
                 />
               </div>
@@ -99,7 +99,7 @@ const ResetPassword = () => {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Repeat password"
-                  style={{ color: '#111827' }}
+                  style={{ color: '#fafaf9' }}
                   className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
                 />
               </div>

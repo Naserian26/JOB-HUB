@@ -14,25 +14,28 @@ const API = 'http://localhost:5000/api';
 
 const scoreTheme = (score) =>
   score >= 80
-    ? { ring: 'ring-lime-300/30',   bg: 'bg-lime-500/10',   text: 'text-lime-300',   bar: 'bg-lime-400',   stroke: '#a3e635' }
+    ? { ring: 'ring-lime-300/30',   bg: 'bg-lime-500/10',   text: 'text-lime-300',   bar: 'bg-lime-400',   stroke: '#f97316' }
     : score >= 50
     ? { ring: 'ring-amber-200/30',  bg: 'bg-amber-500/10',  text: 'text-amber-300',  bar: 'bg-amber-400',  stroke: '#fbbf24' }
     : { ring: 'ring-red-200/30',    bg: 'bg-red-500/10',    text: 'text-red-300',    bar: 'bg-red-400',    stroke: '#f87171' };
 
+// ─── Improved Match Bar (Grid Layout) ─────────────────────────────────────────
 const MatchBar = ({ label, value, barClass }) => (
-  <div className="flex items-center gap-3">
-    <span className="w-24 shrink-0 text-right text-xs text-slate-500">{label}</span>
-    <div className="relative flex-1 h-1.5 rounded-full bg-slate-900 overflow-hidden">
+  <div className="flex flex-col gap-1">
+    <div className="flex justify-between items-center text-xs">
+      <span className="text-slate-400 font-medium">{label}</span>
+      <span className={`font-bold ${barClass.replace('bg-', 'text-')}`}>{value}%</span>
+    </div>
+    <div className="relative h-2 w-full rounded-full bg-slate-900 overflow-hidden">
       <div
         className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${barClass}`}
         style={{ width: `${value}%` }}
       />
     </div>
-    <span className="w-7 text-right text-xs font-semibold text-slate-400">{value}%</span>
   </div>
 );
 
-// ─── Match Panel (AI score) ───────────────────────────────────────────────────
+// ─── Match Panel (Improved Layout) ───────────────────────────────────────────
 
 const MatchPanel = ({ match }) => {
   if (!match) return null;
@@ -48,28 +51,33 @@ const MatchPanel = ({ match }) => {
   ];
 
   return (
-    <div className={`rounded-2xl ring-1 ${t.ring} ${t.bg} p-5 space-y-3`}>
-      <div className="flex items-center justify-between">
-        <span className={`flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${t.text}`}>
-          <Sparkles className="h-3.5 w-3.5" /> AI Match Score
-        </span>
-        <span className={`text-3xl font-bold tabular-nums ${t.text}`}>{match_score}%</span>
+    <div className={`rounded-2xl ring-1 ${t.ring} ${t.bg} p-6 space-y-4`}>
+      {/* Header with Big Score */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-black/10">
+        <div>
+          <span className={`flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase ${t.text} mb-1`}>
+            <Sparkles className="h-3.5 w-3.5" /> AI Match Score
+          </span>
+          <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+            {explanation || 'Analysis based on your profile compatibility.'}
+          </p>
+        </div>
+        <div className={`text-5xl font-extrabold tabular-nums ${t.text} leading-none`}>
+          {match_score}%
+        </div>
       </div>
-      <div className="space-y-1.5">
+
+      {/* Grid Layout for Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
         {bars.map(({ label, value }) => (
           <MatchBar key={label} label={label} value={value} barClass={t.bar} />
         ))}
       </div>
-      {explanation && (
-        <p className={`text-xs leading-relaxed border-t border-black/5 pt-3 ${t.text}`}>
-          {explanation}
-        </p>
-      )}
     </div>
   );
 };
 
-// ─── CV Score Panel ───────────────────────────────────────────────────────────
+// ─── CV Score Panel (Improved Layout) ───────────────────────────────────────
 
 const RingChart = ({ score, stroke }) => {
   const r = 26;
@@ -142,11 +150,11 @@ const CVScorePanel = ({ jobId, headers }) => {
   ];
 
   return (
-    <div className={`rounded-2xl ring-1 ${t.ring} ${t.bg} p-5 space-y-4`}>
+    <div className={`rounded-2xl ring-1 ${t.ring} ${t.bg} p-6 space-y-5`}>
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className={`flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${t.text}`}>
+        <span className={`flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase ${t.text}`}>
           <FileText className="h-3.5 w-3.5" /> CV Readiness
         </span>
         <button
@@ -157,10 +165,10 @@ const CVScorePanel = ({ jobId, headers }) => {
         </button>
       </div>
 
-      {/* Ring + bars */}
-      <div className="flex items-center gap-5">
+      {/* Ring + Grid Bars */}
+      <div className="flex gap-6">
         <RingChart score={overall} stroke={t.stroke} />
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           {bars.map(({ label, value }) => (
             <MatchBar key={label} label={label} value={value} barClass={t.bar} />
           ))}
@@ -185,9 +193,9 @@ const CVScorePanel = ({ jobId, headers }) => {
 
       {/* Expandable signal list */}
       {open && signals?.length > 0 && (
-        <div className="border-t border-white/5 pt-3 space-y-2">
+        <div className="border-t border-white/5 pt-4 space-y-3">
           {signals.map(({ key, label, score, detail }) => (
-            <div key={key} className="flex items-start gap-2.5">
+            <div key={key} className="flex items-start gap-3">
               <SignalIcon score={score} />
               <div>
                 <p className="text-xs font-semibold text-slate-300">{label}</p>
@@ -373,10 +381,11 @@ const ApplyModal = ({ job, cvUrl, match, onClose, onSuccess }) => {
               </select>
             </div>
 
+            {/* FIXED BUTTON STYLES: High Contrast and Visible */}
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-lime-accent py-3.5 text-sm font-semibold text-black transition hover:bg-lime-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-lime-500 hover:bg-lime-400 py-3.5 text-sm font-extrabold text-slate-900 shadow-[0_0_15px_rgba(132,204,22,0.4)] transition transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting
                 ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>
@@ -534,9 +543,10 @@ const JobDetail = () => {
               ) : alreadyApplied ? (
                 <ApplicationStatusBadge status={existingApp.status} appliedAt={existingApp.appliedAt} />
               ) : (
+                /* FIXED BUTTON STYLES: High Contrast and Visible */
                 <button
                   onClick={() => setModalOpen(true)}
-                  className="shrink-0 rounded-2xl bg-lime-accent px-6 py-3 text-sm font-semibold text-black shadow-sm transition hover:bg-lime-accent-hover"
+                  className="shrink-0 rounded-2xl bg-lime-500 hover:bg-lime-400 px-8 py-3 text-sm font-extrabold text-slate-900 shadow-[0_0_15px_rgba(132,204,22,0.3)] transition transform hover:scale-105"
                 >
                   Apply now
                 </button>

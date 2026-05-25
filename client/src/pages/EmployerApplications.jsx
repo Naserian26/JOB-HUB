@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { Users, Download, MessageSquare } from 'lucide-react';
+import { Users, Download, MessageSquare,  MapPin } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
 
 const API = 'http://localhost:5000/api';
@@ -57,12 +57,13 @@ const EmployerApplications = () => {
     navigate(`/messages?appId=${app._id}&seekerId=${seekerId}&employerId=${employerId}&name=${name}&job=${job}`);
   };
 
+  // FIXED: Dark Mode Status Styles
   const getStatusStyle = (status) => ({
-    pending:   'bg-gray-100 text-gray-800 border-gray-200',
-    interview: 'bg-blue-100 text-blue-800 border-blue-200',
-    hired:     'bg-green-100 text-green-800 border-green-200',
-    rejected:  'bg-red-100 text-red-800 border-red-200',
-  }[status] ?? 'bg-gray-100 text-gray-800 border-gray-200');
+    pending:   'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    interview: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    hired:     'bg-lime-500/20 text-lime-400 border-lime-500/30',
+    rejected:  'bg-red-500/20 text-red-400 border-red-500/30',
+  }[status] ?? 'bg-slate-700 text-slate-300');
 
   const filtered = filter === 'all'
     ? applications
@@ -70,21 +71,24 @@ const EmployerApplications = () => {
 
   return (
     <EmployerLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-slate-100">Applications</h1>
+          <p className="text-sm text-slate-400 mt-0.5">
             {applications.length} total candidate{applications.length !== 1 ? 's' : ''} across all jobs
           </p>
         </div>
 
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 text-sm">
+        {/* FIXED: Dark Mode Filter Tabs */}
+        <div className="flex items-center gap-1 bg-slate-900 border border-dark-border rounded-lg p-1 text-sm self-start md:self-auto">
           {['all', 'pending', 'interview', 'hired', 'rejected'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-md font-medium capitalize transition ${
-                filter === f ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              className={`px-4 py-1.5 rounded-md font-medium capitalize transition-all ${
+                filter === f 
+                  ? 'bg-lime-accent text-black shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
               {f}
@@ -93,23 +97,24 @@ const EmployerApplications = () => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      {/* FIXED: Dark Mode Table Container */}
+      <div className="overflow-hidden rounded-xl border border-dark-border bg-dark-card shadow-dark-sm">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-            <p className="text-sm text-gray-400">Loading applications...</p>
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-lime-accent" />
+            <p className="text-sm text-slate-400">Loading applications...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center">
-            <Users className="mb-3 h-12 w-12 text-gray-200" />
-            <p className="font-medium text-gray-500">No applications found</p>
-            <p className="mt-1 text-sm text-gray-400">
+            <Users className="mb-3 h-12 w-12 text-slate-600" />
+            <p className="font-medium text-slate-500">No applications found</p>
+            <p className="mt-1 text-sm text-slate-400">
               {filter === 'all' ? 'Applications will appear here once people apply.' : `No ${filter} applications yet.`}
             </p>
           </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <thead className="border-b border-dark-border bg-slate-900/50 text-xs font-semibold uppercase tracking-wider text-slate-400">
               <tr>
                 <th className="px-6 py-4">Candidate</th>
                 <th className="px-6 py-4">Job</th>
@@ -120,27 +125,32 @@ const EmployerApplications = () => {
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-dark-border">
               {filtered.map((app) => (
-                <tr key={app._id} className="transition hover:bg-gray-50">
+                <tr key={app._id} className="transition hover:bg-slate-900/30 group">
                   <td className="px-6 py-4">
-                    <p className="font-semibold text-gray-900">{app.seekerId?.name || '—'}</p>
-                    <p className="text-xs text-gray-400">{app.seekerId?.email || ''}</p>
+                    <p className="font-semibold text-slate-100 group-hover:text-lime-accent transition-colors">{app.seekerId?.name || '—'}</p>
+                    <p className="text-xs text-slate-400">{app.seekerId?.email || ''}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-gray-700">{app.jobId?.title || '—'}</p>
-                    <p className="text-xs text-gray-400">{app.jobId?.location || ''}</p>
+                    <div className="flex flex-col gap-1">
+                      <p className="font-medium text-slate-200">{app.jobId?.title || '—'}</p>
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <MapPin className="h-3 w-3" />
+                        {app.jobId?.location || '—'}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-sm font-bold ${
-                      app.matchScore >= 80 ? 'text-green-600' :
-                      app.matchScore >= 50 ? 'text-amber-500' : 'text-gray-400'
+                      app.matchScore >= 80 ? 'text-lime-300' :
+                      app.matchScore >= 50 ? 'text-amber-400' : 'text-slate-500'
                     }`}>
                       {app.matchScore ?? 0}%
                     </span>
                   </td>
                   <td className="px-6 py-4 max-w-xs">
-                    <p className="truncate text-xs text-gray-500">{app.coverLetter || '—'}</p>
+                    <p className="truncate text-xs text-slate-400 italic">{app.coverLetter || '—'}</p>
                   </td>
                   <td className="px-6 py-4">
                     {app.cvUrl ? (
@@ -148,30 +158,34 @@ const EmployerApplications = () => {
                         href={app.cvUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 transition"
+                        className="flex items-center gap-1 text-lime-accent hover:text-lime-300 transition"
                       >
                         <Download className="h-4 w-4" /> Download
                       </a>
                     ) : (
-                      <span className="text-xs text-gray-400">No CV</span>
+                      <span className="text-xs text-slate-600">No CV</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <select
                       value={app.status}
                       onChange={(e) => handleStatusChange(app._id, e.target.value)}
-                      className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 ${getStatusStyle(app.status)}`}
+                      className={`
+                        cursor-pointer rounded-full border px-3 py-1.5 text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-lime-accent focus:ring-offset-2 focus:ring-offset-slate-900
+                        ${getStatusStyle(app.status)}
+                      `}
                     >
-                      <option value="pending">Pending</option>
-                      <option value="interview">Interview</option>
-                      <option value="hired">Hired</option>
-                      <option value="rejected">Rejected</option>
+                      {/* FIXED: Explicit classes for Dropdown Options to ensure visibility on Dark Theme */}
+                      <option value="pending" className="bg-slate-900 text-slate-100">Pending</option>
+                      <option value="interview" className="bg-slate-900 text-slate-100">Interview</option>
+                      <option value="hired" className="bg-slate-900 text-slate-100">Hired</option>
+                      <option value="rejected" className="bg-slate-900 text-slate-100">Rejected</option>
                     </select>
                   </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleMessage(app)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 hover:text-indigo-700 transition"
+                      className="flex items-center gap-1.5 text-xs font-medium text-lime-accent hover:text-lime-300 transition"
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Message
                     </button>

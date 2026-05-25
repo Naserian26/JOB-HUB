@@ -5,8 +5,8 @@ import axios from 'axios';
 import { getSocket } from '../utils/socket';
 import {
   Briefcase, LayoutDashboard, FileText, User,
-  Settings, LogOut, Building2, Menu, X, Bell,
-  CheckCircle, Info, Clock, XCircle,MessageSquare
+  Settings, LogOut, Building2, Menu, X, Bell, Calendar,
+  CheckCircle, Info, Clock, XCircle, MessageSquare
 } from 'lucide-react';
 
 const API = 'http://localhost:5000/api';
@@ -35,7 +35,6 @@ const SeekerLayout = ({ children, profile }) => {
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
     : 'U';
 
-  // Fetch notifications on mount
   useEffect(() => {
     if (!user?.token) return;
     const fetchNotifications = async () => {
@@ -51,11 +50,9 @@ const SeekerLayout = ({ children, profile }) => {
     fetchNotifications();
   }, [user?.token]);
 
-  // Listen for real-time notifications via socket
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
-
     const handleStatusUpdate = (data) => {
       const newNotif = {
         _id: Date.now().toString(),
@@ -67,12 +64,10 @@ const SeekerLayout = ({ children, profile }) => {
       };
       setNotifications(prev => [newNotif, ...prev]);
     };
-
     socket.on('status_update', handleStatusUpdate);
     return () => socket?.off('status_update', handleStatusUpdate);
   }, []);
 
-  // Close bell dropdown on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target)) {
@@ -86,7 +81,6 @@ const SeekerLayout = ({ children, profile }) => {
   const handleBellOpen = async () => {
     setBellOpen(prev => !prev);
     if (!bellOpen && unreadCount > 0) {
-      // Mark all as read
       try {
         await axios.put(`${API}/notifications/read-all`, {}, {
           headers: { Authorization: `Bearer ${user.token}` },
@@ -99,19 +93,21 @@ const SeekerLayout = ({ children, profile }) => {
   };
 
   const navLinks = [
-    { to: '/seeker/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
-    { to: '/jobs', icon: <Briefcase className="h-5 w-5" />, label: 'Find Jobs' },
-    { to: '/companies', icon: <Building2 className="h-5 w-5" />, label: 'Companies' },
-    { to: '/applications', icon: <FileText className="h-5 w-5" />, label: 'My Applications' },
-    { to: '/messages', icon: <MessageSquare className="h-5 w-5" />, label: 'Messages' },
-    { to: '/seeker/profile', icon: <User className="h-5 w-5" />, label: 'My Profile' },
-    { to: '/seeker/settings', icon: <Settings className="h-5 w-5" />, label: 'Settings' },
+    { to: '/seeker/dashboard',  icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard' },
+    { to: '/jobs',              icon: <Briefcase className="h-5 w-5" />,       label: 'Find Jobs' },
+    { to: '/companies',         icon: <Building2 className="h-5 w-5" />,       label: 'Companies' },
+    { to: '/applications',      icon: <FileText className="h-5 w-5" />,        label: 'My Applications' },
+    { to: '/seeker/interviews', icon: <Calendar className="h-5 w-5" />,        label: 'Interviews' },
+    { to: '/messages',          icon: <MessageSquare className="h-5 w-5" />,   label: 'Messages' },
+    { to: '/seeker/profile',    icon: <User className="h-5 w-5" />,            label: 'My Profile' },
+    { to: '/seeker/settings',   icon: <Settings className="h-5 w-5" />,        label: 'Settings' },
   ];
 
   return (
     <div className="flex min-h-screen bg-dark-bg text-dark-primary">
 
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-dark-border bg-dark-sidebar transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-dark-border bg-dark-sidebar transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center gap-2 border-b border-dark-border px-6 py-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-lime-500">
             <Briefcase className="h-5 w-5 text-dark-bg" />
@@ -154,13 +150,14 @@ const SeekerLayout = ({ children, profile }) => {
 
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-dark-border bg-dark-card px-4 lg:px-8">
+        {/* Header — z-40 so it sits above page content but below mobile sidebar */}
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-dark-border bg-dark-card px-4 lg:px-8">
           <div className="flex items-center gap-3 lg:hidden">
             <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-dark-secondary">
               <Menu className="h-6 w-6" />
@@ -176,7 +173,6 @@ const SeekerLayout = ({ children, profile }) => {
           <div className="hidden lg:block" />
 
           <div className="flex items-center gap-3">
-
             {/* Bell */}
             <div className="relative" ref={bellRef}>
               <button
@@ -199,7 +195,6 @@ const SeekerLayout = ({ children, profile }) => {
                       <span className="text-xs text-lime-500 font-medium">{unreadCount} unread</span>
                     )}
                   </div>
-
                   <div className="max-h-72 overflow-y-auto divide-y divide-dark-border">
                     {notifications.length === 0 ? (
                       <div className="px-4 py-8 text-center">
@@ -230,6 +225,7 @@ const SeekerLayout = ({ children, profile }) => {
             </div>
 
             <div className="hidden h-8 w-px bg-dark-border md:block" />
+
             <button
               onClick={() => navigate('/seeker/profile')}
               className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-dark-card"
@@ -249,7 +245,7 @@ const SeekerLayout = ({ children, profile }) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-dark-bg p-4 lg:p-8">
+       <main className="flex-1 bg-dark-bg p-4 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

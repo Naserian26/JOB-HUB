@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LayoutDashboard, ClipboardList, Briefcase, Plus, Bell, LogOut, Building2, Settings, ChevronDown,MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Briefcase, Plus, Bell, LogOut, Building2, Settings, ChevronDown, MessageSquare, CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 
 const EmployerLayout = ({ children }) => {
@@ -14,22 +14,23 @@ const EmployerLayout = ({ children }) => {
   const location = useLocation();
 
   const navItems = [
-  { path: '/employer/dashboard', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { path: '/employer/applications', label: 'Applications', icon: <ClipboardList className="w-4 h-4" /> },
-  { path: '/employer/manage-jobs', label: 'Manage Jobs', icon: <Briefcase className="w-4 h-4" /> },
-  { path: '/messages',              label: 'Messages',      icon: <MessageSquare className="w-4 h-4" /> },
-];
+    { path: '/employer/dashboard',   label: 'Overview',    icon: <LayoutDashboard className="w-4 h-4" /> },
+    { path: '/employer/applications',label: 'Applications',icon: <ClipboardList className="w-4 h-4" /> },
+    { path: '/employer/manage-jobs', label: 'Manage Jobs', icon: <Briefcase className="w-4 h-4" /> },
+    { path: '/employer/interviews',  label: 'Interviews',  icon: <CalendarDays className="w-4 h-4" /> },
+    { path: '/messages',             label: 'Messages',    icon: <MessageSquare className="w-4 h-4" /> },
+  ];
 
   const accountItems = [
     { path: '/employer/company-profile', label: 'Company Profile', icon: <Building2 className="w-4 h-4" /> },
-    { path: '/employer/settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
+    { path: '/employer/settings',        label: 'Settings',        icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (
     <div className="flex min-h-screen bg-dark-bg">
 
-      {/* Sidebar */}
-      <aside className="w-60 bg-dark-sidebar flex flex-col fixed top-0 left-0 h-screen z-20 border-r border-dark-border">
+      {/* Sidebar — z-30 so it's above header */}
+      <aside className="w-60 bg-dark-sidebar flex flex-col fixed top-0 left-0 h-screen z-30 border-r border-dark-border">
 
         {/* Brand */}
         <div className="px-5 py-5 flex items-center border-b border-dark-border">
@@ -88,8 +89,8 @@ const EmployerLayout = ({ children }) => {
       {/* Right side */}
       <div className="ml-60 flex-1 flex flex-col min-h-screen">
 
-        {/* Top Header */}
-        <header className="h-14 bg-dark-card border-b border-dark-border flex items-center justify-end px-8 gap-4 sticky top-0 z-10">
+        {/* Header — z-20 so it's above page content but below sidebar */}
+        <header className="h-14 bg-dark-card border-b border-dark-border flex items-center justify-end px-8 gap-4 sticky top-0 z-20">
           <Link to="/employer/notifications" className="relative text-dark-secondary hover:text-lime-500 transition">
             <Bell className="w-5 h-5" />
           </Link>

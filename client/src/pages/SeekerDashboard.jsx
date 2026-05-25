@@ -41,6 +41,29 @@ const ToastContainer = ({ toasts, onDismiss }) => (
   </div>
 );
 
+// ─── Helper Component for Stats (Handles Compact vs Large modes) ───────────────
+const StatItem = ({ stat, isScrolled }) => {
+  if (isScrolled) {
+    // COMPACT MODE (Badge)
+    return (
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${stat.bg} ${stat.color}`}>
+        <span className="text-xs font-bold">{stat.icon}</span>
+        <span className="text-xs font-bold">{stat.label}: {stat.value}</span>
+      </div>
+    );
+  }
+  // FULL MODE (Card)
+  return (
+    <div key={stat.label} className="rounded-xl border border-dark-border bg-dark-card p-4">
+      <div className="mb-3">
+        <div className={`inline-flex rounded-lg p-2 ${stat.bg}`}>{stat.icon}</div>
+      </div>
+      <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+      <p className="mt-1 text-xs font-medium text-dark-secondary">{stat.label}</p>
+    </div>
+  );
+};
+
 const SeekerDashboard = () => {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
@@ -49,6 +72,23 @@ const SeekerDashboard = () => {
   const [toasts, setToasts] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [recsLoading, setRecsLoading] = useState(false);
+  
+  // NEW: Scroll State
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // NEW: Scroll Effect
+  useEffect(() => {
+    const handleScroll = () => {
+      // Adjust 40 to control when the effect triggers
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const addToast = useCallback((data) => {
     const id = Date.now();
@@ -180,97 +220,121 @@ const SeekerDashboard = () => {
     );
   };
 
+  const statsData = [
+    { label: 'Applications', value: totalApplications, icon: <FileText className="h-4 w-4" />, color: 'text-lime-400', bg: 'bg-lime-500/10 border border-lime-500/20' },
+    { label: 'Interviews',   value: interviews,         icon: <TrendingUp className="h-4 w-4" />,   color: 'text-blue-400',   bg: 'bg-blue-500/10 border border-blue-500/20'   },
+    { label: 'Pending',      value: pending,            icon: <Clock className="h-4 w-4" />,      color: 'text-amber-400',  bg: 'bg-amber-500/10 border border-amber-500/20'  },
+    { label: 'Rejected',     value: rejected,           icon: <XCircle className="h-4 w-4" />,      color: 'text-red-400',    bg: 'bg-red-500/10 border border-red-500/20'    },
+  ];
+
   return (
     <SeekerLayout profile={profile}>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-dark-primary">
-            Welcome back, {user?.name?.split(' ')[0]} 👋
-          </h1>
-          <p className="mt-1 text-sm text-dark-secondary">
-            Here is what is happening with your applications.
-          </p>
-        </div>
+        
+        {/* ── STICKY HEADER AREA ───────────────────────────────────────────────── */}
+        <div className={`
+          sticky top-0 z-30 transition-all duration-300 border-b
+          ${isScrolled 
+            ? 'bg-dark-bg/95 backdrop-blur-md border-white/5 shadow-xl py-2 px-4' 
+            : 'bg-transparent border-transparent py-0'
+          }
+        `}>
+          <div className="max-w-7xl mx-auto">
+            
+            {/* Welcome Text (Fades out) */}
+            <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'h-0 opacity-0' : 'mb-6 opacity-100'}`}>
+              <h1 className="text-2xl font-bold text-dark-primary">
+                Welcome back, {user?.name?.split(' ')[0]} 👋
+              </h1>
+              <p className="mt-1 text-sm text-dark-secondary">
+                Here is what is happening with your applications.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="space-y-6 xl:col-span-2">
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              {[
-                { label: 'Applications', value: totalApplications, icon: <FileText className="h-5 w-5 text-lime-500" />, color: 'text-lime-400', bg: 'bg-lime-500/10' },
-                { label: 'Interviews',   value: interviews,         icon: <TrendingUp className="h-5 w-5 text-blue-500" />,   color: 'text-blue-400',   bg: 'bg-blue-500/10'   },
-                { label: 'Pending',      value: pending,            icon: <Clock className="h-5 w-5 text-amber-500" />,      color: 'text-amber-400',  bg: 'bg-amber-500/10'  },
-                { label: 'Rejected',     value: rejected,           icon: <XCircle className="h-5 w-5 text-red-500" />,      color: 'text-red-400',    bg: 'bg-red-500/10'    },
-              ].map((stat, index) => (
-                <div key={index} className="rounded-xl border border-dark-border bg-dark-card p-4">
-                  <div className="mb-3">
-                    <div className={`inline-flex rounded-lg p-2 ${stat.bg}`}>{stat.icon}</div>
-                  </div>
-                  <p className={`text-2xl font-bold ${stat.color}`}>{loading ? '—' : stat.value}</p>
-                  <p className="mt-1 text-xs font-medium text-dark-secondary">{stat.label}</p>
-                </div>
+            {/* Stats Area (Transforms from Grid to Flex) */}
+            <div className={`
+              grid gap-4 transition-all duration-300
+              ${isScrolled 
+                ? 'grid-cols-2 lg:grid-cols-4 gap-2' // Compact layout
+                : 'grid-cols-2 lg:grid-cols-4 gap-4' // Full layout
+              }
+            `}>
+              {statsData.map((stat, index) => (
+                <StatItem key={index} stat={stat} isScrolled={isScrolled} />
               ))}
             </div>
+          </div>
+        </div>
 
-            {/* Recommendations */}
-            <div className="rounded-xl border border-dark-border bg-dark-card shadow-dark-sm overflow-hidden">
-              <div className="flex items-center justify-between border-b border-dark-border bg-dark-sidebar/70 px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-lime-accent" />
-                  <h2 className="font-bold text-slate-100">Recommended for You</h2>
-                </div>
-             <Link to="/seeker/applications" className="text-xs font-medium text-lime-accent hover:text-lime-300">
-  View All →
-</Link>
-              </div>
+        {/* ── MAIN CONTENT GRID ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          
+          {/* LEFT COLUMN (Expands when right sidebar hides) */}
+          <div className={`
+            space-y-6 transition-all duration-500 ease-in-out
+            ${isScrolled ? 'xl:col-span-3' : 'xl:col-span-2'}
+          `}>
 
-              {recsLoading ? (
-                <div className="p-8 text-center">
-                  <div className="mb-2 inline-block h-6 w-6 animate-spin rounded-full border-4 border-slate-700 border-t-lime-accent" />
-                  <p className="text-xs text-slate-400">Finding best matches...</p>
-                </div>
-              ) : recommendations.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Briefcase className="h-8 w-8 text-slate-500 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">Complete your profile to get recommendations</p>
-                  <Link to="/seeker/profile" className="mt-2 inline-block text-xs text-lime-accent hover:text-lime-300">
-                    Complete Profile →
+            {/* Recommendations (Hidden on scroll to save space for table) */}
+            {!isScrolled && (
+              <div className="rounded-xl border border-dark-border bg-dark-card shadow-dark-sm overflow-hidden">
+                <div className="flex items-center justify-between border-b border-dark-border bg-dark-sidebar/70 px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-lime-accent" />
+                    <h2 className="font-bold text-slate-100">Recommended for You</h2>
+                  </div>
+                  <Link to="/seeker/applications" className="text-xs font-medium text-lime-accent hover:text-lime-300">
+                    View All →
                   </Link>
                 </div>
-              ) : (
-                <div className="divide-y divide-dark-border">
-                  {recommendations.map(job => (
-                    <div key={job._id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-900 transition">
-                      <div className="w-9 h-9 rounded-lg bg-lime-500/15 border border-lime-500/30 flex items-center justify-center text-lime-200 font-bold text-sm shrink-0">
-                        {job.employerId?.name?.[0] || '?'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-100 text-sm">{job.title}</p>
-                        <div className="flex flex-wrap gap-3 text-xs text-slate-400 mt-0.5">
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-500" />{job.location}</span>
-                          {job.salary && <span className="flex items-center gap-1"><DollarSign className="h-3 w-3 text-slate-500" />{job.salary}</span>}
+
+                {recsLoading ? (
+                  <div className="p-8 text-center">
+                    <div className="mb-2 inline-block h-6 w-6 animate-spin rounded-full border-4 border-slate-700 border-t-lime-accent" />
+                    <p className="text-xs text-slate-400">Finding best matches...</p>
+                  </div>
+                ) : recommendations.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Briefcase className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">Complete your profile to get recommendations</p>
+                    <Link to="/seeker/profile" className="mt-2 inline-block text-xs text-lime-accent hover:text-lime-300">
+                      Complete Profile →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-dark-border">
+                    {recommendations.map(job => (
+                      <div key={job._id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-900 transition">
+                        <div className="w-9 h-9 rounded-lg bg-lime-500/15 border border-lime-500/30 flex items-center justify-center text-lime-200 font-bold text-sm shrink-0">
+                          {job.employerId?.name?.[0] || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-100 text-sm">{job.title}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-slate-400 mt-0.5">
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-500" />{job.location}</span>
+                            {job.salary && <span className="flex items-center gap-1"><DollarSign className="h-3 w-3 text-slate-500" />{job.salary}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className={`text-xs font-bold ${
+                            job.matchScore >= 80 ? 'text-lime-300' :
+                            job.matchScore >= 50 ? 'text-amber-300' : 'text-slate-500'
+                          }`}>{job.matchScore}% match</span>
+                          <Link
+                            to={`/jobs/${job._id}`}
+                            className="text-xs font-semibold text-black bg-lime-accent hover:bg-lime-accent-hover px-3 py-1.5 rounded-lg transition"
+                          >
+                            View
+                          </Link>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className={`text-xs font-bold ${
-                          job.matchScore >= 80 ? 'text-lime-300' :
-                          job.matchScore >= 50 ? 'text-amber-300' : 'text-slate-500'
-                        }`}>{job.matchScore}% match</span>
-                        <Link
-                          to={`/jobs/${job._id}`}
-                          className="text-xs font-semibold text-black bg-lime-accent hover:bg-lime-accent-hover px-3 py-1.5 rounded-lg transition"
-                        >
-                          View
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Applications table */}
             <div className="overflow-hidden rounded-xl border border-dark-border bg-dark-card shadow-dark-sm">
@@ -343,8 +407,13 @@ const SeekerDashboard = () => {
             </div>
           </div>
 
-          {/* Right */}
-          <div className="space-y-6">
+          {/* RIGHT SIDEBAR 
+              Transitions to width 0 when scrolled to give table full width 
+          ────────────────────────────────────────────────────────────────────── */}
+          <div className={`
+            space-y-6 xl:sticky xl:top-6 xl:self-start transition-all duration-500 ease-in-out overflow-hidden
+            ${isScrolled ? 'w-0 opacity-0 m-0 p-0' : 'xl:col-span-1 opacity-100'}
+          `}>
             <div className="rounded-xl border border-dark-border bg-dark-card p-6 shadow-dark-sm">
               <div className="mb-6 flex items-center gap-3">
                 {profile?.photoUrl ? (

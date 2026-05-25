@@ -29,6 +29,7 @@ import Applications from './pages/Applications';
 import InterviewCalendar from './pages/InterviewCalendar';
 import SeekerApplications from './pages/SeekerApplications';
 import ResetPassword from './pages/ResetPassword';
+import SeekerInterviews from './pages/SeekerInterviews';
 // AUTH
 import { useAuth } from './hooks/useAuth';
 import AuthProvider from './context/AuthProvider';
@@ -108,6 +109,9 @@ function AppRoutes() {
 <Route path="/employer/interviews" element={<InterviewCalendar />} />
 <Route path="/seeker/applications" element={<SeekerApplications />} />
 <Route path="/reset-password" element={<ResetPassword />} />
+<Route path="/seeker/interviews" element={
+  <ProtectedRoute role="seeker"><SeekerInterviews /></ProtectedRoute>
+} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}

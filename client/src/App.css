@@ -1,20 +1,14 @@
 /* Premium Dark AI SaaS Theme CSS Variables */
+@import './styles/theme.css';
+
+/* Legacy variable mappings for compatibility */
 :root {
-  --bg-primary: #050805;
-  --bg-sidebar: #0A0F0A;
-  --bg-card: #111411;
-  --border-dark: #1C231C;
-  --accent-primary: #9FE870;
-  --accent-hover: #8DDB5A;
-  --text-primary: #F5F5F5;
-  --text-secondary: #9CA3AF;
-  /* Legacy variable mappings for compatibility */
-  --accent: var(--accent-primary);
-  --accent-bg: var(--bg-card);
-  --accent-border: var(--border-dark);
-  --border: var(--border-dark);
+  --accent: var(--gold-primary);
+  --accent-bg: var(--bg-elevated);
+  --accent-border: var(--border-primary);
+  --border: var(--border-primary);
   --text-h: var(--text-primary);
-  --social-bg: var(--bg-card);
+  --social-bg: var(--bg-elevated);
   --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 

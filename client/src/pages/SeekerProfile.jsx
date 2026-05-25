@@ -241,7 +241,7 @@ const SeekerProfile = () => {
 
             {/* PHOTO */}
             <div>
-              <label className="mb-3 block text-sm font-medium text-gray-700">Profile Photo</label>
+              <label className="mb-3 block text-sm font-medium text-gray-900">Profile Photo</label>
               <div className="flex items-center gap-5">
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-indigo-200 bg-indigo-50">
@@ -290,7 +290,7 @@ const SeekerProfile = () => {
 
             {/* CV */}
             <div>
-              <label className="mb-3 block text-sm font-medium text-gray-700">CV / Resume</label>
+              <label className="mb-3 block text-sm font-medium text-gray-900">CV / Resume</label>
               <div
                 onClick={() => cvInputRef.current.click()}
                 className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50/30"
@@ -340,7 +340,7 @@ const SeekerProfile = () => {
             {/* SKILLS + EXPERIENCE */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Skills (Comma Separated)</label>
+                <label className="mb-2 block text-sm font-medium text-gray-900">Skills (Comma Separated)</label>
                 <div className="relative">
                   <Award className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <textarea
@@ -348,7 +348,7 @@ const SeekerProfile = () => {
                     value={formData.skills}
                     onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                     placeholder="react, node.js, python, design..."
-                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                 </div>
@@ -356,13 +356,13 @@ const SeekerProfile = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Experience Level</label>
+                <label className="mb-2 block text-sm font-medium text-gray-900">Experience Level</label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <select
                     value={formData.experience}
                     onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   >
                     <option value="">Select level...</option>
                     <option value="Entry">Entry Level</option>
@@ -377,7 +377,7 @@ const SeekerProfile = () => {
             {/* LOCATION + SALARY */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Location</label>
+                <label className="mb-2 block text-sm font-medium text-gray-900">Location</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
@@ -385,13 +385,13 @@ const SeekerProfile = () => {
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g. Nairobi, Kenya"
-                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 p-3 pl-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Salary Expectation (USD)</label>
+                <label className="mb-2 block text-sm font-medium text-gray-900">Salary Expectation (USD)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-3 text-gray-500">$</span>
                   <input
@@ -399,7 +399,7 @@ const SeekerProfile = () => {
                     value={formData.salaryExpectation}
                     onChange={(e) => setFormData({ ...formData, salaryExpectation: e.target.value })}
                     placeholder="80000"
-                    className="block w-full rounded-md border border-gray-300 p-3 pl-8 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 p-3 pl-8 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -407,7 +407,7 @@ const SeekerProfile = () => {
 
             {/* BIO */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Professional Bio</label>
+              <label className="mb-2 block text-sm font-medium text-gray-900">Professional Bio</label>
               <div className="relative">
                 <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <textarea
@@ -415,7 +415,7 @@ const SeekerProfile = () => {
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   placeholder="Describe your career achievements..."
-                  className="block w-full rounded-md border border-gray-300 p-3 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="block w-full rounded-md border border-gray-300 p-3 pl-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   required
                 />
               </div>

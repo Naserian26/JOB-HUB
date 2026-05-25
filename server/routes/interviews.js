@@ -2,25 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Interview = require('../models/Interview');
 const Application = require('../models/Application');
-const { authenticate } = require('../middleware/authenticate');
+const authenticate = require('../middleware/authenticate');
 const authorizeRoles = require('../middleware/authorizeRoles');
-// ─── Helpers ────────────────────────────────────────────────────────────────
+const { sendInterviewInviteEmail, sendInterviewCancelledEmail } = require('../utils/emailService');
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const sendInterviewMessage = async (io, recipientId, payload) => {
-  // Re-use your existing Socket.io message system
-  // Swap this body for however you emit to a user room in your app
   if (io) {
     io.to(recipientId.toString()).emit('notification', payload);
   }
 };
 
-// ─── Routes ─────────────────────────────────────────────────────────────────
-
-/**
- * POST /api/interviews
- * Employer proposes interview slots for an application.
- * Body: { applicationId, proposedSlots: [{date, startTime, endTime}], location?, meetingLink?, notes? }
- */
+// ─── POST /api/interviews ─────────────────────────────────────────────────────
 router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
   try {
     const { applicationId, proposedSlots, location, meetingLink, notes } = req.body;
@@ -30,17 +23,15 @@ router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
     }
 
     const application = await Application.findById(applicationId)
-      .populate('job')
-      .populate('applicant');
+      .populate('jobId')
+      .populate('seekerId');
 
     if (!application) return res.status(404).json({ message: 'Application not found.' });
 
-    // Make sure the employer owns this job
-    if (application.job.employer.toString() !== req.user._id.toString()) {
+    if (application.jobId.employerId.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: 'Not authorised.' });
     }
 
-    // Prevent duplicate active interview for the same application
     const existing = await Interview.findOne({
       application: applicationId,
       status: { $in: ['proposed', 'confirmed'] },
@@ -54,9 +45,9 @@ router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
 
     const interview = await Interview.create({
       application: applicationId,
-      job: application.job._id,
-      employer: req.user._id,
-      candidate: application.applicant._id,
+      job: application.jobId._id,
+      employer: req.user.id,
+      candidate: application.seekerId._id,
       proposedSlots,
       location: location || '',
       meetingLink: meetingLink || '',
@@ -64,17 +55,28 @@ router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
       status: 'proposed',
     });
 
-    // Update application status to 'interview'
     application.status = 'interview';
     await application.save();
 
-    // Notify candidate via Socket.io
+    // Socket.io notification
     const io = req.app.get('io');
-    await sendInterviewMessage(io, application.applicant._id, {
+    await sendInterviewMessage(io, application.seekerId._id, {
       type: 'interview_proposed',
-      message: `You have been invited to interview for ${application.job.title}. Please confirm a time slot.`,
+      message: `You have been invited to interview for ${application.jobId.title}. Please confirm a time slot.`,
       interviewId: interview._id,
     });
+
+    // Email notification — fire and forget, don't block the response
+    sendInterviewInviteEmail({
+      candidateEmail: application.seekerId.email,
+      candidateName: application.seekerId.name,
+      jobTitle: application.jobId.title,
+      companyName: application.jobId.company || '',
+      slots: proposedSlots,
+      location: location || '',
+      meetingLink: meetingLink || '',
+      notes: notes || '',
+    }).catch(err => console.error('Email error:', err));
 
     const populated = await interview.populate([
       { path: 'candidate', select: 'name email' },
@@ -89,36 +91,24 @@ router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
   }
 });
 
-/**
- * GET /api/interviews
- * Employer: all their interviews (calendar view), filterable by date range.
- * Candidate: all their interviews.
- * Query: ?from=2026-05-01&to=2026-05-31&status=confirmed
- */
+// ─── GET /api/interviews ──────────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { from, to, status } = req.query;
+    const { status } = req.query;
     const isEmployer = req.user.role === 'employer';
 
     const filter = isEmployer
-      ? { employer: req.user._id }
-      : { candidate: req.user._id };
+      ? { employer: req.user.id }
+      : { candidate: req.user.id };
 
     if (status) filter.status = status;
-
-    // Date range filter on confirmedSlot.date (for calendar view)
-    if (from || to) {
-      filter['confirmedSlot.date'] = {};
-      if (from) filter['confirmedSlot.date'].$gte = new Date(from);
-      if (to) filter['confirmedSlot.date'].$lte = new Date(to);
-    }
 
     const interviews = await Interview.find(filter)
       .populate('candidate', 'name email profilePhoto')
       .populate('employer', 'name email')
       .populate('job', 'title')
       .populate('application', 'status')
-      .sort({ 'confirmedSlot.date': 1, createdAt: -1 });
+      .sort({ createdAt: -1 });
 
     res.json(interviews);
   } catch (err) {
@@ -127,10 +117,7 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-/**
- * GET /api/interviews/:id
- * Single interview — accessible by the employer or candidate involved.
- */
+// ─── GET /api/interviews/:id ──────────────────────────────────────────────────
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id)
@@ -141,9 +128,9 @@ router.get('/:id', authenticate, async (req, res) => {
 
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });
 
-    const userId = req.user._id.toString();
+    const userId = req.user.id.toString();
     const isParty =
-      interview.employer.toString() === userId ||
+      interview.employer._id.toString() === userId ||
       interview.candidate._id.toString() === userId;
 
     if (!isParty) return res.status(403).json({ message: 'Not authorised.' });
@@ -155,11 +142,7 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-/**
- * PATCH /api/interviews/:id/confirm
- * Candidate confirms one of the proposed slots.
- * Body: { slotId }
- */
+// ─── PATCH /api/interviews/:id/confirm ───────────────────────────────────────
 router.patch('/:id/confirm', authenticate, authorizeRoles('seeker'), async (req, res) => {
   try {
     const { slotId } = req.body;
@@ -171,10 +154,10 @@ router.patch('/:id/confirm', authenticate, authorizeRoles('seeker'), async (req,
       .populate('candidate', 'name email');
 
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });
-    if (interview.candidate._id.toString() !== req.user._id.toString()) {
+    if (interview.candidate._id.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: 'Not authorised.' });
     }
-    if (interview.status !== 'proposed') {
+    if (interview.status !== 'proposed' && interview.status !== 'rescheduled') {
       return res.status(409).json({ message: `Interview is already ${interview.status}.` });
     }
 
@@ -185,7 +168,6 @@ router.patch('/:id/confirm', authenticate, authorizeRoles('seeker'), async (req,
     interview.status = 'confirmed';
     await interview.save();
 
-    // Notify employer
     const io = req.app.get('io');
     await sendInterviewMessage(io, interview.employer._id, {
       type: 'interview_confirmed',
@@ -200,11 +182,7 @@ router.patch('/:id/confirm', authenticate, authorizeRoles('seeker'), async (req,
   }
 });
 
-/**
- * PATCH /api/interviews/:id/cancel
- * Either party can cancel.
- * Body: { reason? }
- */
+// ─── PATCH /api/interviews/:id/cancel ────────────────────────────────────────
 router.patch('/:id/cancel', authenticate, async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id)
@@ -214,7 +192,7 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
 
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });
 
-    const userId = req.user._id.toString();
+    const userId = req.user.id.toString();
     const isParty =
       interview.employer._id.toString() === userId ||
       interview.candidate._id.toString() === userId;
@@ -225,11 +203,10 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
     }
 
     interview.status = 'cancelled';
-    interview.cancelledBy = req.user._id;
+    interview.cancelledBy = req.user.id;
     interview.cancelReason = req.body.reason || '';
     await interview.save();
 
-    // Notify the other party
     const notifyId =
       userId === interview.employer._id.toString()
         ? interview.candidate._id
@@ -243,6 +220,16 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
       reason: interview.cancelReason,
     });
 
+    // Email the candidate if employer cancelled
+    if (userId === interview.employer._id.toString()) {
+      sendInterviewCancelledEmail({
+        candidateEmail: interview.candidate.email,
+        candidateName: interview.candidate.name,
+        jobTitle: interview.job.title,
+        reason: interview.cancelReason,
+      }).catch(err => console.error('Email error:', err));
+    }
+
     res.json(interview);
   } catch (err) {
     console.error('PATCH /interviews/:id/cancel error:', err);
@@ -250,11 +237,7 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
   }
 });
 
-/**
- * PATCH /api/interviews/:id/reschedule
- * Employer proposes new slots (resets status back to proposed).
- * Body: { proposedSlots: [{date, startTime, endTime}], notes? }
- */
+// ─── PATCH /api/interviews/:id/reschedule ────────────────────────────────────
 router.patch('/:id/reschedule', authenticate, authorizeRoles('employer'), async (req, res) => {
   try {
     const { proposedSlots, notes } = req.body;
@@ -267,7 +250,7 @@ router.patch('/:id/reschedule', authenticate, authorizeRoles('employer'), async 
       .populate('candidate', 'name email');
 
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });
-    if (interview.employer.toString() !== req.user._id.toString()) {
+    if (interview.employer.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: 'Not authorised.' });
     }
     if (interview.status === 'completed') {
@@ -294,15 +277,12 @@ router.patch('/:id/reschedule', authenticate, authorizeRoles('employer'), async 
   }
 });
 
-/**
- * PATCH /api/interviews/:id/complete
- * Employer marks interview as completed.
- */
+// ─── PATCH /api/interviews/:id/complete ──────────────────────────────────────
 router.patch('/:id/complete', authenticate, authorizeRoles('employer'), async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });
-    if (interview.employer.toString() !== req.user._id.toString()) {
+    if (interview.employer.toString() !== req.user.id.toString()) {
       return res.status(403).json({ message: 'Not authorised.' });
     }
     if (interview.status !== 'confirmed') {

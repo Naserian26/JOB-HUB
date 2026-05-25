@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import axios from 'axios';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +33,7 @@ const Login = () => {
           <h2 className="text-3xl font-extrabold text-dark-primary">Welcome Back</h2>
           <p className="mt-2 text-dark-secondary">Sign in to your JobHub account</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-dark-primary">Email Address</label>
@@ -40,28 +41,36 @@ const Login = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-dark-secondary/50" />
               </div>
-              <input 
-                type="email" 
-                required 
-                className="focus:ring-lime-500 focus:border-lime-500 block w-full pl-10 sm:text-sm border-dark-border rounded-md py-2 border bg-dark-bg text-dark-primary placeholder-dark-secondary/50" 
+              <input
+                type="email"
+                required
+                className="focus:ring-lime-500 focus:border-lime-500 block w-full pl-10 sm:text-sm border-dark-border rounded-md py-2 border bg-dark-bg text-dark-primary placeholder-dark-secondary/50"
                 placeholder="you@example.com"
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-dark-primary">Password</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-dark-secondary/50" />
               </div>
-              <input 
-                type="password" 
-                required 
-                className="focus:ring-lime-500 focus:border-lime-500 block w-full pl-10 sm:text-sm border-dark-border rounded-md py-2 border bg-dark-bg text-dark-primary placeholder-dark-secondary/50" 
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                className="focus:ring-lime-500 focus:border-lime-500 block w-full pl-10 pr-10 sm:text-sm border-dark-border rounded-md py-2 border bg-dark-bg text-dark-primary placeholder-dark-secondary/50"
                 placeholder="•••••••••"
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-dark-secondary/50 hover:text-dark-secondary transition"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             <div className="flex justify-end mt-1">
               <Link to="/forgot-password" className="text-xs text-lime-500 hover:text-lime-600">
@@ -70,8 +79,8 @@ const Login = () => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-dark-bg bg-lime-500 hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500"
           >
             Sign In <ArrowRight className="ml-2 h-4 w-4" />

@@ -4,39 +4,151 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Premium Dark AI SaaS Theme - Lime Green Accents
-        'dark-bg': '#050805',
-        'dark-sidebar': '#0A0F0A',
-        'dark-card': '#111411',
-        'dark-border': '#1C231C',
-        'lime-accent': '#9FE870',
-        'lime-accent-hover': '#8DDB5A',
-        // Extended lime palette for variations
+        // Ember Dark theme values
+        'dark-bg': '#0c0a09',
+        'dark-sidebar': '#1c1917',
+        'dark-card': '#1c1917',
+        'dark-border': '#292524',
+        'gold-accent': '#f97316',
+        'gold-accent-hover': '#ea580c',
+        'lime-accent': '#f97316',
+        'lime-accent-hover': '#ea580c',
+
+        // White overrides to surface card background
+        white: '#1c1917',
+
+        // Gold palette overrides
+        gold: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
+        },
+        // Alias green, lime, purple, indigo to orange/ember palette
+        green: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
+        },
         lime: {
-          50: '#f9fce4',
-          100: '#f3f9c8',
-          200: '#e8f596',
-          300: '#d8ed5f',
-          400: '#c5e03b',
-          500: '#9FE870',
-          600: '#8DDB5A',
-          700: '#76c74a',
-          800: '#5fa73d',
-          900: '#4a8530',
-          950: '#2c4d1a',
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
+        },
+        purple: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
+        },
+        indigo: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
+        },
+        // Gray, slate, zinc, neutral mapped to Stone
+        gray: {
+          50: '#0c0a09',   // Main background
+          100: '#1c1917',  // Surface/card background
+          200: '#292524',  // Border
+          300: '#44403c',  // Muted border
+          400: '#a8a29e',  // Muted text
+          500: '#a8a29e',  // Muted text
+          600: '#d6d3d1',  // Body text
+          700: '#d6d3d1',  // Body text
+          800: '#fafaf9',  // Heading text
+          900: '#fafaf9',  // Heading text
+          950: '#fafaf9',
+        },
+        slate: {
+          50: '#0c0a09',
+          100: '#1c1917',
+          200: '#292524',
+          300: '#44403c',
+          400: '#a8a29e',
+          500: '#a8a29e',
+          600: '#d6d3d1',
+          700: '#d6d3d1',
+          800: '#fafaf9',
+          900: '#fafaf9',
+          950: '#fafaf9',
+        },
+        zinc: {
+          50: '#0c0a09',
+          100: '#1c1917',
+          200: '#292524',
+          300: '#44403c',
+          400: '#a8a29e',
+          500: '#a8a29e',
+          600: '#d6d3d1',
+          700: '#d6d3d1',
+          800: '#fafaf9',
+          900: '#fafaf9',
+          950: '#fafaf9',
+        },
+        neutral: {
+          50: '#0c0a09',
+          100: '#1c1917',
+          200: '#292524',
+          300: '#44403c',
+          400: '#a8a29e',
+          500: '#a8a29e',
+          600: '#d6d3d1',
+          700: '#d6d3d1',
+          800: '#fafaf9',
+          900: '#fafaf9',
+          950: '#fafaf9',
         },
       },
       backgroundColor: {
-        'dark-bg': '#050805',
-        'dark-sidebar': '#0A0F0A',
-        'dark-card': '#111411',
+        'dark-bg': '#0c0a09',
+        'dark-sidebar': '#1c1917',
+        'dark-card': '#1c1917',
       },
       borderColor: {
-        'dark-border': '#1C231C',
+        'dark-border': '#292524',
       },
       textColor: {
-        'dark-primary': '#F5F5F5',
-        'dark-secondary': '#9CA3AF',
+        'dark-primary': '#fafaf9',
+        'dark-secondary': '#d6d3d1',
       },
       fontFamily: {
         sans: ['Inter', 'DM Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
@@ -59,7 +171,7 @@ export default {
         'dark-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
       },
       ringColor: {
-        'lime-accent': '#9FE870',
+        'gold-accent': '#f97316',
       },
       borderRadius: {
         xs: '0.25rem',

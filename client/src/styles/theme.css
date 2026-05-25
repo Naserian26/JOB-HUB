@@ -1,0 +1,21 @@
+:root {
+  --bg-primary: #0c0a09;
+  --bg-surface: #1c1917;
+  --bg-elevated: #292524;
+  --border-primary: #292524;
+  --border-subtle: #24201e;
+
+  --gold-primary: #f97316;
+  --gold-hover: #ea580c;
+  --gold-muted: rgba(249,115,22,0.15);
+  --gold-text: #f97316;
+
+  --text-primary: #fafaf9;
+  --text-secondary: #d6d3d1;
+  --text-muted: #a8a29e;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #378add;
+}
