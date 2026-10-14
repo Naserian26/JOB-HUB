@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const MATCHER_URL = 'http://localhost:8000/match';
+const MATCHER_URL = `${process.env.MATCHER_URL || 'http://localhost:8000'}/match`;
 
 const calculateMatch = async (seekerData, jobData) => {
   try {

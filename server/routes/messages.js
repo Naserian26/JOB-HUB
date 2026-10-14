@@ -2,18 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 const { getIO } = require('../utils/socket');
-
-const authenticate = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
+const authenticate = require('../middleware/authenticate');
 
 const makeConversationId = (employerId, seekerId, applicationId) =>
   `${employerId}_${seekerId}_${applicationId}`;

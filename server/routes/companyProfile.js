@@ -3,22 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const jwt = require('jsonwebtoken');
 const CompanyProfile = require('../models/CompanyProfile');
 const Job = require('../models/Job');
-
-const authenticate = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ message: 'No token provided' });
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { ...decoded, id: decoded.id || decoded._id };
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
+const authenticate = require('../middleware/authenticate');
 
 // Logo upload
 const logoStorage = multer.diskStorage({

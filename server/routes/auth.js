@@ -7,6 +7,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const authenticate = require('../middleware/authenticate');
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
 // Caps brute-force attempts per endpoint: 5 tries per 15 min per IP. Each
@@ -22,20 +23,6 @@ const makeAuthLimiter = () => rateLimit({
 const registerLimiter = makeAuthLimiter();
 const loginLimiter = makeAuthLimiter();
 const forgotPasswordLimiter = makeAuthLimiter();
-
-// ─── Auth Middleware ────────────────────────────────────────────────────────
-const authenticate = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ message: 'No token provided' });
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { ...decoded, id: decoded.id || decoded._id };
-    next();
-  } catch {
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 router.post('/register', registerLimiter, async (req, res) => {

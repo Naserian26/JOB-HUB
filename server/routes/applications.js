@@ -4,20 +4,10 @@ const Application = require('../models/Application');
 const Job = require('../models/Job');
 const Profile = require('../models/Profile');
 const Notification = require('../models/Notification');
-const jwt = require('jsonwebtoken');
 const { getIO } = require('../utils/socket');
 const { calculateMatch } = require('../utils/matcherHelper');
 const upload = require('../middleware/upload'); // <--- ADDED THIS
-
-const authenticate = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
+const authenticate = require('../middleware/authenticate');
 
 // 1. Apply to Job (Seeker) - WITH AI MATCHING
 // <--- ADDED upload.single('coverLetter') BELOW

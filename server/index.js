@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
@@ -53,6 +54,12 @@ const startServer = async () => {
     initSocket(httpServer, corsOptions);
 
     // 3. Middleware
+    app.use(helmet({
+      // The client (a different origin/port) needs to load profile photos
+      // and company logos from here, so default same-origin CORP would
+      // silently block those <img> requests.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
