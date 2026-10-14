@@ -2,10 +2,26 @@ require('dotenv').config(); // <--- CRITICAL: Loads your .env file
 
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+
+// ─── Rate Limiting ──────────────────────────────────────────────────────────
+// Caps brute-force attempts per endpoint: 5 tries per 15 min per IP. Each
+// route gets its own limiter so attempts on one don't eat another's budget.
+const makeAuthLimiter = () => rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again later.' },
+});
+
+const registerLimiter = makeAuthLimiter();
+const loginLimiter = makeAuthLimiter();
+const forgotPasswordLimiter = makeAuthLimiter();
 
 // ─── Auth Middleware ────────────────────────────────────────────────────────
 const authenticate = (req, res, next) => {
@@ -22,7 +38,7 @@ const authenticate = (req, res, next) => {
 };
 
 // ─── Register ─────────────────────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   const { name, email, password, role } = req.body;
   console.log('Register hit:', { name, email, role });
   try {
@@ -42,14 +58,14 @@ router.post('/register', async (req, res) => {
 });
 
 // ─── Login ───────────────────────────────────────────────────────────────────
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (!user) return res.status(400).json({ message: 'Invalid email or password' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email } });
@@ -59,7 +75,9 @@ router.post('/login', async (req, res) => {
 });
 
 // ─── Forgot Password (IMPROVED) ────────────────────────────────────────────
-router.post('/forgot-password', async (req, res) => {
+const GENERIC_RESET_MESSAGE = 'If that email is registered, a password reset link has been sent.';
+
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const { email } = req.body;
 
   console.log(`[FORGOT PASSWORD] Request received for email: ${email}`);
@@ -67,8 +85,9 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
+      // Deliberately generic: don't reveal whether this email is registered.
       console.log(`[FORGOT PASSWORD] User not found: ${email}`);
-      return res.status(400).json({ message: 'User not found' });
+      return res.json({ message: GENERIC_RESET_MESSAGE });
     }
 
     // Generate Token (15 minutes expiry)
@@ -124,7 +143,7 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     console.log(`[FORGOT PASSWORD] Email sent successfully to ${email}`);
-    res.json({ message: 'Reset link sent to email' });
+    res.json({ message: GENERIC_RESET_MESSAGE });
 
   } catch (error) {
     console.error('[FORGOT PASSWORD] Error:', error);
