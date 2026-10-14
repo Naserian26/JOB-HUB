@@ -41,10 +41,8 @@ const ToastContainer = ({ toasts, onDismiss }) => (
   </div>
 );
 
-// ─── Helper Component for Stats (Handles Compact vs Large modes) ───────────────
 const StatItem = ({ stat, isScrolled }) => {
   if (isScrolled) {
-    // COMPACT MODE (Badge)
     return (
       <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${stat.bg} ${stat.color}`}>
         <span className="text-xs font-bold">{stat.icon}</span>
@@ -52,9 +50,8 @@ const StatItem = ({ stat, isScrolled }) => {
       </div>
     );
   }
-  // FULL MODE (Card)
   return (
-    <div key={stat.label} className="rounded-xl border border-dark-border bg-dark-card p-4">
+    <div className="rounded-xl border border-dark-border bg-dark-card p-4">
       <div className="mb-3">
         <div className={`inline-flex rounded-lg p-2 ${stat.bg}`}>{stat.icon}</div>
       </div>
@@ -72,20 +69,10 @@ const SeekerDashboard = () => {
   const [toasts, setToasts] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [recsLoading, setRecsLoading] = useState(false);
-  
-  // NEW: Scroll State
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // NEW: Scroll Effect
   useEffect(() => {
-    const handleScroll = () => {
-      // Adjust 40 to control when the effect triggers
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 40);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -222,9 +209,9 @@ const SeekerDashboard = () => {
 
   const statsData = [
     { label: 'Applications', value: totalApplications, icon: <FileText className="h-4 w-4" />, color: 'text-lime-400', bg: 'bg-lime-500/10 border border-lime-500/20' },
-    { label: 'Interviews',   value: interviews,         icon: <TrendingUp className="h-4 w-4" />,   color: 'text-blue-400',   bg: 'bg-blue-500/10 border border-blue-500/20'   },
-    { label: 'Pending',      value: pending,            icon: <Clock className="h-4 w-4" />,      color: 'text-amber-400',  bg: 'bg-amber-500/10 border border-amber-500/20'  },
-    { label: 'Rejected',     value: rejected,           icon: <XCircle className="h-4 w-4" />,      color: 'text-red-400',    bg: 'bg-red-500/10 border border-red-500/20'    },
+    { label: 'Interviews',   value: interviews,         icon: <TrendingUp className="h-4 w-4" />, color: 'text-blue-400',  bg: 'bg-blue-500/10 border border-blue-500/20'  },
+    { label: 'Pending',      value: pending,            icon: <Clock className="h-4 w-4" />,      color: 'text-amber-400', bg: 'bg-amber-500/10 border border-amber-500/20' },
+    { label: 'Rejected',     value: rejected,           icon: <XCircle className="h-4 w-4" />,    color: 'text-red-400',   bg: 'bg-red-500/10 border border-red-500/20'    },
   ];
 
   return (
@@ -232,18 +219,17 @@ const SeekerDashboard = () => {
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <div className="space-y-6">
-        
-        {/* ── STICKY HEADER AREA ───────────────────────────────────────────────── */}
+
+        {/* ── STICKY HEADER ─────────────────────────────────────────────────── */}
         <div className={`
           sticky top-0 z-30 transition-all duration-300 border-b
-          ${isScrolled 
-            ? 'bg-dark-bg/95 backdrop-blur-md border-white/5 shadow-xl py-2 px-4' 
+          ${isScrolled
+            ? 'bg-dark-bg/95 backdrop-blur-md border-white/5 shadow-xl py-2 px-4'
             : 'bg-transparent border-transparent py-0'
           }
         `}>
           <div className="max-w-7xl mx-auto">
-            
-            {/* Welcome Text (Fades out) */}
+
             <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'h-0 opacity-0' : 'mb-6 opacity-100'}`}>
               <h1 className="text-2xl font-bold text-dark-primary">
                 Welcome back, {user?.name?.split(' ')[0]} 👋
@@ -253,14 +239,7 @@ const SeekerDashboard = () => {
               </p>
             </div>
 
-            {/* Stats Area (Transforms from Grid to Flex) */}
-            <div className={`
-              grid gap-4 transition-all duration-300
-              ${isScrolled 
-                ? 'grid-cols-2 lg:grid-cols-4 gap-2' // Compact layout
-                : 'grid-cols-2 lg:grid-cols-4 gap-4' // Full layout
-              }
-            `}>
+            <div className={`grid gap-4 transition-all duration-300 ${isScrolled ? 'grid-cols-2 lg:grid-cols-4 gap-2' : 'grid-cols-2 lg:grid-cols-4 gap-4'}`}>
               {statsData.map((stat, index) => (
                 <StatItem key={index} stat={stat} isScrolled={isScrolled} />
               ))}
@@ -268,16 +247,13 @@ const SeekerDashboard = () => {
           </div>
         </div>
 
-        {/* ── MAIN CONTENT GRID ───────────────────────────────────────────────────── */}
+        {/* ── MAIN CONTENT ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          
-          {/* LEFT COLUMN (Expands when right sidebar hides) */}
-          <div className={`
-            space-y-6 transition-all duration-500 ease-in-out
-            ${isScrolled ? 'xl:col-span-3' : 'xl:col-span-2'}
-          `}>
 
-            {/* Recommendations (Hidden on scroll to save space for table) */}
+          {/* LEFT COLUMN */}
+          <div className={`space-y-6 transition-all duration-500 ease-in-out ${isScrolled ? 'xl:col-span-3' : 'xl:col-span-2'}`}>
+
+            {/* Recommendations */}
             {!isScrolled && (
               <div className="rounded-xl border border-dark-border bg-dark-card shadow-dark-sm overflow-hidden">
                 <div className="flex items-center justify-between border-b border-dark-border bg-dark-sidebar/70 px-6 py-4">
@@ -336,7 +312,7 @@ const SeekerDashboard = () => {
               </div>
             )}
 
-            {/* Applications table */}
+            {/* Applications Table */}
             <div className="overflow-hidden rounded-xl border border-dark-border bg-dark-card shadow-dark-sm">
               <div className="flex items-center justify-between border-b border-dark-border bg-dark-sidebar/70 px-6 py-4">
                 <h2 className="font-bold text-slate-100">Latest Applications</h2>
@@ -375,28 +351,38 @@ const SeekerDashboard = () => {
                     </thead>
                     <tbody className="divide-y divide-dark-border">
                       {applications.map(app => (
-                        <tr key={app._id} className="group transition-colors hover:bg-slate-900/80">
+                        <tr key={app._id} className="group transition-colors hover:bg-dark-sidebar/60">
+
+                          {/* Job Title */}
                           <td className="px-6 py-4">
-                            <p className="font-medium text-slate-100 transition-colors group-hover:text-lime-accent">
+                            <p style={{ color: '#fafaf9' }} className="font-medium transition-colors group-hover:text-lime-accent">
                               {app.jobId?.title || 'Unknown Job'}
                             </p>
                           </td>
-                          <td className="px-6 py-4 text-slate-400">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-3 w-3 text-slate-600" />
+
+                          {/* Company */}
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2" style={{ color: '#e7e5e4' }}>
+                              <Building2 className="h-3 w-3 shrink-0" style={{ color: '#d6d3d1' }} />
                               {app.jobId?.employerId?.name || '—'}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-slate-400">
-                            <span className="rounded bg-slate-900 px-2 py-1 text-xs text-slate-300">
+
+                          {/* Type */}
+                          <td className="px-6 py-4">
+                            <span className="rounded px-2 py-1 text-xs" style={{ background: '#44403c', color: '#e7e5e4' }}>
                               {app.jobId?.type || 'Full-time'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-xs text-slate-500">
+
+                          {/* Date */}
+                          <td className="px-6 py-4 text-xs" style={{ color: '#d6d3d1' }}>
                             {new Date(app.createdAt).toLocaleDateString(undefined, {
                               month: 'short', day: 'numeric', year: 'numeric',
                             })}
                           </td>
+
+                          {/* Status */}
                           <td className="px-6 py-4 text-right">{getStatusBadge(app.status)}</td>
                         </tr>
                       ))}
@@ -407,9 +393,7 @@ const SeekerDashboard = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR 
-              Transitions to width 0 when scrolled to give table full width 
-          ────────────────────────────────────────────────────────────────────── */}
+          {/* RIGHT SIDEBAR */}
           <div className={`
             space-y-6 xl:sticky xl:top-6 xl:self-start transition-all duration-500 ease-in-out overflow-hidden
             ${isScrolled ? 'w-0 opacity-0 m-0 p-0' : 'xl:col-span-1 opacity-100'}

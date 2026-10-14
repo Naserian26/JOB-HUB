@@ -1,6 +1,135 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;700&display=swap');
 
 @import "tailwindcss";
+@theme {
+  --color-dark-bg: #1c1917;
+  --color-dark-sidebar: #292524;
+  --color-dark-card: #292524;
+  --color-dark-border: #44403c;
+  --color-dark-primary: #fafaf9;
+  --color-dark-secondary: #e7e5e4;
+  --color-dark-muted: #d6d3d1;
+
+  --color-gold-accent: #f97316;
+  --color-gold-accent-hover: #ea580c;
+  --color-lime-accent: #f97316;
+  --color-lime-accent-hover: #ea580c;
+
+  --color-white: #292524;
+
+  --color-gold-50: #fff7ed;
+  --color-gold-100: #ffedd5;
+  --color-gold-200: #fed7aa;
+  --color-gold-300: #fdba74;
+  --color-gold-400: #fb923c;
+  --color-gold-500: #f97316;
+  --color-gold-600: #ea580c;
+  --color-gold-700: #c2410c;
+  --color-gold-800: #9a3412;
+  --color-gold-900: #7c2d12;
+  --color-gold-950: #431407;
+
+  --color-green-50: #fff7ed;
+  --color-green-100: #ffedd5;
+  --color-green-200: #fed7aa;
+  --color-green-300: #fdba74;
+  --color-green-400: #fb923c;
+  --color-green-500: #f97316;
+  --color-green-600: #ea580c;
+  --color-green-700: #c2410c;
+  --color-green-800: #9a3412;
+  --color-green-900: #7c2d12;
+  --color-green-950: #431407;
+
+  --color-lime-50: #fff7ed;
+  --color-lime-100: #ffedd5;
+  --color-lime-200: #fed7aa;
+  --color-lime-300: #fdba74;
+  --color-lime-400: #fb923c;
+  --color-lime-500: #f97316;
+  --color-lime-600: #ea580c;
+  --color-lime-700: #c2410c;
+  --color-lime-800: #9a3412;
+  --color-lime-900: #7c2d12;
+  --color-lime-950: #431407;
+
+  --color-purple-50: #fff7ed;
+  --color-purple-100: #ffedd5;
+  --color-purple-200: #fed7aa;
+  --color-purple-300: #fdba74;
+  --color-purple-400: #fb923c;
+  --color-purple-500: #f97316;
+  --color-purple-600: #ea580c;
+  --color-purple-700: #c2410c;
+  --color-purple-800: #9a3412;
+  --color-purple-900: #7c2d12;
+  --color-purple-950: #431407;
+
+  --color-indigo-50: #fff7ed;
+  --color-indigo-100: #ffedd5;
+  --color-indigo-200: #fed7aa;
+  --color-indigo-300: #fdba74;
+  --color-indigo-400: #fb923c;
+  --color-indigo-500: #f97316;
+  --color-indigo-600: #ea580c;
+  --color-indigo-700: #c2410c;
+  --color-indigo-800: #9a3412;
+  --color-indigo-900: #7c2d12;
+  --color-indigo-950: #431407;
+
+  --color-gray-50: #1c1917;
+  --color-gray-100: #292524;
+  --color-gray-200: #44403c;
+  --color-gray-300: #57534e;
+  --color-gray-400: #d6d3d1;
+  --color-gray-500: #d6d3d1;
+  --color-gray-600: #e7e5e4;
+  --color-gray-700: #e7e5e4;
+  --color-gray-800: #fafaf9;
+  --color-gray-900: #fafaf9;
+  --color-gray-950: #fafaf9;
+
+  --color-slate-50: #1c1917;
+  --color-slate-100: #292524;
+  --color-slate-200: #44403c;
+  --color-slate-300: #57534e;
+  --color-slate-400: #d6d3d1;
+  --color-slate-500: #d6d3d1;
+  --color-slate-600: #e7e5e4;
+  --color-slate-700: #e7e5e4;
+  --color-slate-800: #fafaf9;
+  --color-slate-900: #fafaf9;
+  --color-slate-950: #fafaf9;
+
+  --color-zinc-50: #1c1917;
+  --color-zinc-100: #292524;
+  --color-zinc-200: #44403c;
+  --color-zinc-300: #57534e;
+  --color-zinc-400: #d6d3d1;
+  --color-zinc-500: #d6d3d1;
+  --color-zinc-600: #e7e5e4;
+  --color-zinc-700: #e7e5e4;
+  --color-zinc-800: #fafaf9;
+  --color-zinc-900: #fafaf9;
+  --color-zinc-950: #fafaf9;
+
+  --color-neutral-50: #1c1917;
+  --color-neutral-100: #292524;
+  --color-neutral-200: #44403c;
+  --color-neutral-300: #57534e;
+  --color-neutral-400: #d6d3d1;
+  --color-neutral-500: #d6d3d1;
+  --color-neutral-600: #e7e5e4;
+  --color-neutral-700: #e7e5e4;
+  --color-neutral-800: #fafaf9;
+  --color-neutral-900: #fafaf9;
+  --color-neutral-950: #fafaf9;
+
+  --shadow-dark-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-dark-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-dark-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-dark-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
 
 /* Premium Dark AI SaaS Theme - Global Styles */
 @import './styles/theme.css';
@@ -30,8 +159,14 @@ body {
 }
 
 /* Smooth transitions for theme changes */
-* {
+
+button, a, input, [role="button"] {
   transition-property: background-color, border-color, color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+textarea::placeholder,
+input::placeholder {
+  color: #78716c !important;
+  opacity: 1;
 }

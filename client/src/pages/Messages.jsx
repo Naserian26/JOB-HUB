@@ -25,13 +25,13 @@ const formatTime = (date) => {
 
 const EmptyState = ({ search }) => (
   <div className="flex flex-col items-center justify-center h-full text-center gap-3 px-6">
-    <div className="w-14 h-14 rounded-2xl bg-lime-500/10 flex items-center justify-center">
-      <MessageSquare className="h-7 w-7 text-lime-500/60" />
+    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+      <MessageSquare className="h-7 w-7 text-orange-500/60" />
     </div>
-    <p className="text-sm font-semibold text-slate-300">
+    <p className="text-sm font-semibold" style={{ color: '#d6d3d1' }}>
       {search ? 'No conversations found' : 'No messages yet'}
     </p>
-    <p className="text-xs text-slate-500 max-w-xs">
+    <p className="text-xs max-w-xs" style={{ color: '#78716c' }}>
       {search
         ? 'Try a different name or job title'
         : 'Conversations will appear here when employers or applicants message you'}
@@ -41,11 +41,11 @@ const EmptyState = ({ search }) => (
 
 const NoChatSelected = () => (
   <div className="flex flex-col items-center justify-center h-full text-center gap-3 px-6">
-    <div className="w-14 h-14 rounded-2xl bg-lime-500/10 flex items-center justify-center">
-      <MessageSquare className="h-7 w-7 text-lime-500/60" />
+    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+      <MessageSquare className="h-7 w-7 text-orange-500/60" />
     </div>
-    <p className="text-sm font-semibold text-slate-300">Select a conversation</p>
-    <p className="text-xs text-slate-500">Choose a conversation from the left to start chatting</p>
+    <p className="text-sm font-semibold" style={{ color: '#d6d3d1' }}>Select a conversation</p>
+    <p className="text-xs" style={{ color: '#78716c' }}>Choose a conversation from the left to start chatting</p>
   </div>
 );
 
@@ -57,29 +57,47 @@ const ConversationItem = ({ conv, isActive, onClick }) => {
     <button
       onClick={onClick}
       className={`w-full flex items-start gap-3 px-4 py-3.5 text-left transition border-b border-dark-border
-        ${isActive ? 'bg-lime-500/10' : 'hover:bg-dark-card'}`}
+        ${isActive ? 'bg-orange-500/10' : 'hover:bg-dark-card'}`}
     >
-      <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0 mt-0.5">
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5"
+        style={{ backgroundColor: 'rgba(249,115,22,0.15)', color: '#fb923c' }}
+      >
         {getInitials(conv.otherPersonName)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-slate-100' : 'font-medium text-slate-300'}`}>
+          <p
+            className="text-sm truncate"
+            style={{
+              fontWeight: hasUnread ? 600 : 500,
+              color: hasUnread ? '#fafaf9' : '#d6d3d1',
+            }}
+          >
             {conv.otherPersonName}
           </p>
-          <span className="text-[10px] text-slate-500 shrink-0">
+          <span className="text-[10px] shrink-0" style={{ color: '#78716c' }}>
             {conv.lastMessage ? formatTime(conv.lastMessage.createdAt) : ''}
           </span>
         </div>
-        <p className="text-xs text-slate-500 truncate mt-0.5">{conv.jobTitle}</p>
+        <p className="text-xs truncate mt-0.5" style={{ color: '#78716c' }}>{conv.jobTitle}</p>
         {conv.lastMessage && (
-          <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-slate-300 font-medium' : 'text-slate-600'}`}>
+          <p
+            className="text-xs truncate mt-0.5"
+            style={{
+              color: hasUnread ? '#d6d3d1' : '#57534e',
+              fontWeight: hasUnread ? 500 : 400,
+            }}
+          >
             {conv.lastMessage.text}
           </p>
         )}
       </div>
       {hasUnread && (
-        <span className="mt-1 h-5 w-5 rounded-full bg-lime-500 flex items-center justify-center text-[9px] font-bold text-dark-bg shrink-0">
+        <span
+          className="mt-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+          style={{ backgroundColor: '#f97316', color: '#1c1917' }}
+        >
           {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
         </span>
       )}
@@ -175,24 +193,29 @@ const ChatPanel = ({ conv, currentUserId, token, onNewMessage }) => {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-dark-border shrink-0">
-        <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0">
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+          style={{ backgroundColor: 'rgba(249,115,22,0.15)', color: '#fb923c' }}
+        >
           {getInitials(conv.otherPersonName)}
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-100">{conv.otherPersonName}</p>
-          <p className="text-xs text-slate-500">Re: {conv.jobTitle || 'Application'}</p>
+          <p className="text-sm font-semibold" style={{ color: '#fafaf9' }}>{conv.otherPersonName}</p>
+          <p className="text-xs" style={{ color: '#78716c' }}>Re: {conv.jobTitle || 'Application'}</p>
         </div>
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+            <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#78716c' }} />
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-slate-500">No messages yet — say hello!</p>
+            <p className="text-sm" style={{ color: '#78716c' }}>No messages yet — say hello!</p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -200,14 +223,22 @@ const ChatPanel = ({ conv, currentUserId, token, onNewMessage }) => {
             return (
               <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className="max-w-[70%] space-y-1">
-                  <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    isMe
-                      ? 'bg-lime-500 text-dark-bg rounded-br-sm font-medium'
-                      : 'bg-dark-card text-slate-200 rounded-bl-sm ring-1 ring-dark-border'
-                  }`}>
+                  <div
+                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      isMe ? 'rounded-br-sm' : 'rounded-bl-sm'
+                    }`}
+                    style={
+                      isMe
+                        ? { backgroundColor: '#f97316', color: '#1c1917', fontWeight: 500 }
+                        : { backgroundColor: '#292524', color: '#e7e5e4', border: '1px solid #44403c' }
+                    }
+                  >
                     {msg.text}
                   </div>
-                  <p className={`text-[10px] text-slate-600 ${isMe ? 'text-right' : 'text-left'}`}>
+                  <p
+                    className={`text-[10px] ${isMe ? 'text-right' : 'text-left'}`}
+                    style={{ color: '#57534e' }}
+                  >
                     {formatTime(msg.createdAt)}
                   </p>
                 </div>
@@ -218,6 +249,7 @@ const ChatPanel = ({ conv, currentUserId, token, onNewMessage }) => {
         <div ref={bottomRef} />
       </div>
 
+      {/* Input */}
       <div className="px-4 py-3 border-t border-dark-border flex items-end gap-2 shrink-0">
         <textarea
           rows={1}
@@ -225,12 +257,22 @@ const ChatPanel = ({ conv, currentUserId, token, onNewMessage }) => {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKey}
           placeholder="Type a message… (Enter to send)"
-          className="flex-1 resize-none rounded-xl border border-dark-border bg-dark-bg px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 outline-none focus:border-lime-500/40 focus:bg-dark-card transition max-h-32"
+          className="flex-1 resize-none rounded-xl border border-dark-border bg-dark-bg px-4 py-2.5 text-sm outline-none transition max-h-32"
+          style={{
+            color: '#fafaf9',
+            caretColor: '#f97316',
+            '--tw-border-opacity': 1,
+          }}
+          onFocus={e => e.target.style.borderColor = 'rgba(249,115,22,0.5)'}
+          onBlur={e => e.target.style.borderColor = ''}
         />
         <button
           onClick={handleSend}
           disabled={!text.trim() || sending}
-          className="h-10 w-10 rounded-xl bg-lime-500 flex items-center justify-center text-dark-bg shrink-0 hover:bg-lime-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ backgroundColor: '#f97316', color: '#1c1917' }}
+          onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#ea580c'; }}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f97316'}
         >
           {sending
             ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -252,7 +294,6 @@ const MessagesContent = () => {
   const [loading,         setLoading]        = useState(true);
   const [search,          setSearch]         = useState('');
 
-  // Load conversations + handle URL params in one effect
   useEffect(() => {
     if (!user?.token) return;
     let cancelled = false;
@@ -300,7 +341,7 @@ const MessagesContent = () => {
 
     load();
     return () => { cancelled = true; };
-  }, [user?.token, searchParams]); 
+  }, [user?.token, searchParams]);
 
   const handleNewMessage = useCallback((conversationId, message) => {
     setConversations(prev =>
@@ -327,24 +368,33 @@ const MessagesContent = () => {
   );
 
   return (
-    <div className="flex overflow-hidden rounded-xl border border-dark-border bg-dark-card" style={{ height: 'calc(100vh - 7rem)' }}>
-
+    <div
+      className="flex overflow-hidden rounded-xl border border-dark-border bg-dark-card"
+      style={{ height: 'calc(100vh - 7rem)' }}
+    >
       {/* Sidebar */}
       <div className="w-80 shrink-0 flex flex-col border-r border-dark-border">
         <div className="px-4 py-3 border-b border-dark-border">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5"
+              style={{ color: '#78716c' }}
+            />
             <input
               type="text"
               placeholder="Search conversations…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-dark-bg border border-dark-border rounded-lg pl-8 pr-8 py-2 text-xs text-slate-300 placeholder:text-slate-600 outline-none focus:border-lime-500/40 transition"
+              className="w-full bg-dark-bg border border-dark-border rounded-lg pl-8 pr-8 py-2 text-xs outline-none transition"
+              style={{ color: '#fafaf9' }}
+              onFocus={e => e.target.style.borderColor = 'rgba(249,115,22,0.5)'}
+              onBlur={e => e.target.style.borderColor = ''}
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: '#78716c' }}
               >
                 <X className="h-3 w-3" />
               </button>
@@ -355,7 +405,7 @@ const MessagesContent = () => {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+              <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#78716c' }} />
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState search={search} />

@@ -7,6 +7,7 @@ const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
 const { getIO } = require('../utils/socket');
 const { calculateMatch } = require('../utils/matcherHelper');
+const upload = require('../middleware/upload'); // <--- ADDED THIS
 
 const authenticate = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
@@ -19,11 +20,17 @@ const authenticate = (req, res, next) => {
 };
 
 // 1. Apply to Job (Seeker) - WITH AI MATCHING
-router.post('/apply/:jobId', authenticate, async (req, res) => {
+// <--- ADDED upload.single('coverLetter') BELOW
+router.post('/apply/:jobId', authenticate, upload.single('coverLetter'), async (req, res) => {
   if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Access denied' });
   try {
     const job = await Job.findById(req.params.jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    // <--- ADDED THIS: Check if file was actually uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload a cover letter document.' });
+    }
 
     const existing = await Application.findOne({ jobId: req.params.jobId, seekerId: req.user.id });
     if (existing) return res.status(400).json({ message: 'Already applied' });
@@ -59,7 +66,7 @@ router.post('/apply/:jobId', authenticate, async (req, res) => {
       jobId: req.params.jobId,
       seekerId: req.user.id,
       employerId: job.employerId,
-      coverLetter: req.body.coverLetter,
+      coverLetter: req.file.path, // <--- CHANGED THIS: Save file path instead of text
       expectedSalary: req.body.expectedSalary,
       availability: req.body.availability,
       cvUrl,

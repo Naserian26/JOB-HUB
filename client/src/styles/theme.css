@@ -1,9 +1,9 @@
 :root {
-  --bg-primary: #0c0a09;
-  --bg-surface: #1c1917;
-  --bg-elevated: #292524;
-  --border-primary: #292524;
-  --border-subtle: #24201e;
+  --bg-primary: #1c1917;
+  --bg-surface: #292524;
+  --bg-elevated: #3e3a38;
+  --border-primary: #44403c;
+  --border-subtle: #2f2b29;
 
   --gold-primary: #f97316;
   --gold-hover: #ea580c;
@@ -11,8 +11,8 @@
   --gold-text: #f97316;
 
   --text-primary: #fafaf9;
-  --text-secondary: #d6d3d1;
-  --text-muted: #a8a29e;
+  --text-secondary: #e7e5e4;
+  --text-muted: #d6d3d1;
 
   --success: #22c55e;
   --warning: #f59e0b;

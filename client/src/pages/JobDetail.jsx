@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import {
   MapPin, DollarSign, ArrowLeft, Send, FileText,
-  CheckCircle, Sparkles, Loader2, Clock, XCircle, UserCheck, Briefcase,
+  CheckCircle, Sparkles, Loader2, Clock, XCircle, UserCheck, Briefcase, Upload,
 } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -259,20 +259,43 @@ const AVAILABILITY_OPTIONS = [
 const ApplyModal = ({ job, cvUrl, match, onClose, onSuccess }) => {
   const { user } = useAuth();
   const headers = useMemo(() => ({ Authorization: `Bearer ${user?.token}` }), [user?.token]);
+  
+  const fileInputRef = useRef(null);
 
-  const [form, setForm]         = useState({ coverLetter: '', expectedSalary: '', availability: '' });
+  const [form, setForm]         = useState({ expectedSalary: '', availability: '' });
+  const [coverLetterFile, setCoverLetterFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]       = useState(null);
   const [done, setDone]         = useState(false);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) setCoverLetterFile(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!coverLetterFile) {
+      setError('Please upload your cover letter.');
+      return;
+    }
+
     setError(null);
     setSubmitting(true);
     try {
-      await axios.post(`${API}/applications/apply/${job._id}`, { ...form, cvUrl }, { headers });
+      const data = new FormData();
+      data.append('coverLetter', coverLetterFile);
+      data.append('expectedSalary', form.expectedSalary);
+      data.append('availability', form.availability);
+      if (cvUrl) data.append('cvUrl', cvUrl);
+
+      await axios.post(`${API}/applications/apply/${job._id}`, data, { 
+        headers: { ...headers, 'Content-Type': 'multipart/form-data' } 
+      });
+      
       setDone(true);
       setTimeout(onSuccess, 1400);
     } catch (err) {
@@ -291,7 +314,7 @@ const ApplyModal = ({ job, cvUrl, match, onClose, onSuccess }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-md rounded-3xl bg-dark-card shadow-2xl p-7 ring-1 ring-dark-border">
+      <div className="relative w-full max-w-md rounded-3xl bg-dark-card shadow-2xl p-7 ring-1 ring-dark-border max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute right-5 top-5 text-slate-500 hover:text-slate-200 transition-colors text-xl leading-none"
@@ -338,16 +361,44 @@ const ApplyModal = ({ job, cvUrl, match, onClose, onSuccess }) => {
               </div>
             )}
 
+            {/* Cover Letter Upload */}
             <div className="space-y-1">
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                Cover Letter
+                Cover Letter Document
               </label>
-              <textarea
-                required rows={4}
-                placeholder="Why are you a great fit?"
-                value={form.coverLetter}
-                onChange={set('coverLetter')}
-                className="w-full rounded-xl border border-dark-border bg-slate-950 p-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-slate-700 focus:bg-slate-900 transition resize-none"
+              <div 
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                className="w-full rounded-xl border border-dark-border bg-slate-950 p-5 text-center cursor-pointer hover:border-slate-700 hover:bg-slate-900 transition"
+              >
+                {coverLetterFile ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <FileText className="h-7 w-7 text-lime-400 shrink-0" />
+                    <div className="text-left min-w-0 flex-1">
+                      <p className="text-sm text-slate-100 font-medium truncate">{coverLetterFile.name}</p>
+                      <p className="text-xs text-slate-500">{(coverLetterFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setCoverLetterFile(null); }} 
+                      className="ml-2 text-slate-500 hover:text-slate-200 transition text-lg leading-none p-1"
+                      aria-label="Remove file"
+                    >✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="mx-auto mb-2 h-8 w-8 text-slate-500" />
+                    <p className="text-sm text-slate-300 font-medium">Click to upload cover letter</p>
+                    <p className="mt-1 text-xs text-slate-500">PDF, DOC or DOCX. Max 10MB.</p>
+                  </>
+                )}
+              </div>
+              <input 
+                ref={fileInputRef} 
+                type="file" 
+                accept=".pdf,.doc,.docx" 
+                className="hidden" 
+                onChange={handleFileChange} 
               />
             </div>
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = requireco('path');
 const { createServer } = require('http');
 const { init: initSocket } = require('./utils/socket');
 const connectDB = require('./config/db');
@@ -54,7 +55,7 @@ const startServer = async () => {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
     // 4. API Routes
     app.use('/api/auth', authRoutes);
     app.use('/api/jobs', jobRoutes);

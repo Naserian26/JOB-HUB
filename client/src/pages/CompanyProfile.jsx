@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import EmployerLayout from '../components/EmployerLayout';
 import { useAuth } from '../hooks/useAuth';
 import { FaLinkedin, FaTwitter } from 'react-icons/fa';
-import { FiCamera, FiSave } from 'react-icons/fi';
+import { FiCamera, FiSave, FiEdit2 } from 'react-icons/fi';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import axios from 'axios';
 
@@ -33,6 +33,10 @@ const CompanyProfile = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false); // ← NEW
+
+  const profileIsFilled = (data) =>
+    data.industry || data.description || data.linkedin || data.twitter;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,8 +50,17 @@ const CompanyProfile = () => {
           twitter: twitter || '',
         });
         if (logoUrl) setLogoUrl(logoUrl);
+        // Only enter edit mode automatically if profile is empty
+        if (!profileIsFilled(res.data)) {
+          setIsEditing(true);
+        }
       } catch (err) {
-        if (err.response?.status !== 404) setError('Failed to load profile.');
+        if (err.response?.status === 404) {
+          // No profile yet — start in edit mode
+          setIsEditing(true);
+        } else {
+          setError('Failed to load profile.');
+        }
       } finally {
         setLoading(false);
       }
@@ -97,19 +110,32 @@ const CompanyProfile = () => {
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'CO';
 
+  const industryOptions = ['Technology', 'Finance', 'Healthcare', 'Education', 'Retail', 'Manufacturing', 'Media', 'NGO / Nonprofit', 'Government', 'Other'];
+
   return (
     <EmployerLayout>
       <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">Company Profile</h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Company Profile</h1>
+          {!isEditing && !loading && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1.5 text-sm text-indigo-600 font-medium hover:text-indigo-700 transition"
+            >
+              <FiEdit2 className="w-4 h-4" />
+              Edit
+            </button>
+          )}
+        </div>
         <p className="text-sm text-gray-400 mb-8">This info is visible to job seekers on your listings.</p>
 
         {loading ? (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Spinner /> Loading...
           </div>
-        ) : (
+        ) : isEditing ? (
+          /* ── EDIT MODE ── */
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
             {/* Logo */}
             <div className="flex items-center gap-5">
               <div className="relative">
@@ -130,13 +156,7 @@ const CompanyProfile = () => {
                 >
                   {uploadingLogo ? <Spinner /> : <FiCamera className="w-3 h-3 text-white" />}
                 </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoChange}
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">Company Logo</p>
@@ -154,9 +174,7 @@ const CompanyProfile = () => {
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select industry</option>
-                {['Technology', 'Finance', 'Healthcare', 'Education', 'Retail', 'Manufacturing', 'Media', 'NGO / Nonprofit', 'Government', 'Other'].map(i => (
-                  <option key={i} value={i}>{i}</option>
-                ))}
+                {industryOptions.map(i => <option key={i} value={i}>{i}</option>)}
               </select>
             </div>
 
@@ -199,9 +217,9 @@ const CompanyProfile = () => {
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
-            {success && <p className="text-sm text-green-600">Profile saved. Redirecting...</p>}
+            {success && <p className="text-sm text-green-600">Profile saved!</p>}
 
-            <div>
+            <div className="flex items-center gap-3">
               <button
                 type="submit"
                 disabled={saving}
@@ -210,8 +228,74 @@ const CompanyProfile = () => {
                 {saving ? <Spinner /> : <FiSave className="w-4 h-4" />}
                 {saving ? 'Saving...' : 'Save Profile'}
               </button>
+              {profileIsFilled(form) && (
+                <button
+                  type="button"
+                  onClick={() => { setIsEditing(false); setError(''); }}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </form>
+        ) : (
+          /* ── VIEW MODE ── */
+          <div className="flex flex-col gap-6">
+            {/* Logo + company name */}
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-indigo-500 font-bold text-xl">{initials}</span>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700">Company Logo</p>
+                <p className="text-xs text-gray-400 mt-0.5">{form.industry || 'No industry set'}</p>
+              </div>
+            </div>
+
+            {/* Industry */}
+            {form.industry && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Industry</p>
+                <p className="text-sm text-gray-800">{form.industry}</p>
+              </div>
+            )}
+
+            {/* Description */}
+            {form.description && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">About the company</p>
+                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{form.description}</p>
+              </div>
+            )}
+
+            {/* Social links */}
+            {(form.linkedin || form.twitter) && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Social links</p>
+                <div className="flex flex-col gap-2">
+                  {form.linkedin && (
+                    <a href={form.linkedin} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-indigo-600 hover:underline">
+                      <FaLinkedin className="text-[#0077b5]" />
+                      {form.linkedin}
+                    </a>
+                  )}
+                  {form.twitter && (
+                    <a href={form.twitter} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-indigo-600 hover:underline">
+                      <FaTwitter className="text-[#1da1f2]" />
+                      {form.twitter}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </EmployerLayout>
