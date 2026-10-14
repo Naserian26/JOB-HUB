@@ -141,7 +141,7 @@ router.post('/photo', authenticate, uploadPhoto.single('photo'), async (req, res
 router.post('/cv', authenticate, uploadCv.single('cv'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No CV uploaded' });
-    const cvUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/cvs/${req.file.filename}`;
+    const cvUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/api/files/cv/${req.file.filename}`;
     const profile = await Profile.findOneAndUpdate(
       { userId: req.user.id },
       { cvUrl },

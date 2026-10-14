@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = requireco('path');
+const path = require('path');
 const { createServer } = require('http');
 const { init: initSocket } = require('./utils/socket');
 const connectDB = require('./config/db');
@@ -15,6 +15,7 @@ const companyProfileRoutes = require('./routes/companyProfile');
 const notificationsRouter = require('./routes/notifications');
 const messagesRouter = require('./routes/messages');
 const interviewsRouter = require('./routes/interviews');
+const filesRouter = require('./routes/files');
 // Load environment variables
 dotenv.config();
 
@@ -55,7 +56,10 @@ const startServer = async () => {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Only photos and company logos are meant to be publicly viewable;
+// CVs and cover letters are served through the authenticated /api/files routes.
+app.use('/uploads/photos', express.static(path.join(__dirname, 'uploads', 'photos')));
+app.use('/uploads/logos', express.static(path.join(__dirname, 'uploads', 'logos')));
     // 4. API Routes
     app.use('/api/auth', authRoutes);
     app.use('/api/jobs', jobRoutes);
@@ -65,6 +69,7 @@ app.use('/api/company-profile', companyProfileRoutes);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/interviews', interviewsRouter);
+app.use('/api/files', filesRouter);
     // 5. Health Check
     app.get('/', (req, res) => {
       res.send('JobHub API Running');

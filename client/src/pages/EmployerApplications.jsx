@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Users, Download, MessageSquare, MapPin } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
+import { openProtectedFile } from '../utils/openProtectedFile';
 
 const API = 'http://localhost:5000/api';
 
@@ -26,6 +27,7 @@ const getScoreColor = (score) =>
 
 /* ── Reusable data row (needs handlers passed in) ── */
 const DataRow = ({ app, onStatus, onMessage }) => {
+  const { user } = useAuth();
   const [hovered, setHovered] = useState(false);
   const bg = hovered ? BG_HOVER : BG_ROW;
   const score = app.matchScore ?? 0;
@@ -59,13 +61,21 @@ const DataRow = ({ app, onStatus, onMessage }) => {
 
       {/* Cover Letter */}
       <div className="px-4 py-3.5 min-w-0">
-        <p className="truncate text-xs italic" style={{ color: '#a8a29e' }}>{app.coverLetter || '—'}</p>
+        {app.coverLetter ? (
+          <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.coverLetter, user?.token); }}
+            className="truncate text-xs italic inline-block" style={{ color: '#a8a29e' }}
+          >
+            View
+          </a>
+        ) : (
+          <p className="truncate text-xs italic" style={{ color: '#a8a29e' }}>—</p>
+        )}
       </div>
 
       {/* CV */}
       <div className="px-2 py-3.5 text-center">
         {app.cvUrl ? (
-          <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+          <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.cvUrl, user?.token); }}
             className="inline-flex transition" style={{ color: '#f97316' }}
             onMouseEnter={e => e.currentTarget.style.color = '#fb923c'}
             onMouseLeave={e => e.currentTarget.style.color = '#f97316'}
@@ -278,7 +288,11 @@ const EmployerApplications = () => {
               </div>
 
               {app.coverLetter && (
-                <p className="text-xs italic line-clamp-2" style={{ color: '#a8a29e' }}>{app.coverLetter}</p>
+                <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.coverLetter, user?.token); }}
+                  className="block text-xs italic line-clamp-2" style={{ color: '#a8a29e' }}
+                >
+                  View cover letter
+                </a>
               )}
 
               <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid #44403c' }}>
@@ -295,7 +309,7 @@ const EmployerApplications = () => {
 
                 <div className="flex items-center gap-3">
                   {app.cvUrl && (
-                    <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+                    <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.cvUrl, user?.token); }}
                       className="flex items-center gap-1 text-xs font-medium" style={{ color: '#f97316' }}
                     >
                       <Download className="h-3.5 w-3.5" /> CV

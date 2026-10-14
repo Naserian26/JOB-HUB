@@ -8,12 +8,15 @@ import {
   Pencil, DollarSign, 
 } from 'lucide-react';
 import SeekerLayout from '../components/SeekerLayout';
+import { openProtectedFile } from '../utils/openProtectedFile';
 
 const API = 'http://localhost:5000/api';
 
 // ─── View Mode Card ───────────────────────────────────────────────────────────
 
-const ProfileView = ({ profile, photoPreview, cvUrl, cvName, onEdit }) => (
+const ProfileView = ({ profile, photoPreview, cvUrl, cvName, onEdit }) => {
+  const { user } = useAuth();
+  return (
   <div className="space-y-6">
     {/* Header */}
     <div className="flex items-center justify-between">
@@ -117,9 +120,8 @@ const ProfileView = ({ profile, photoPreview, cvUrl, cvName, onEdit }) => (
           <p className="text-xs truncate" style={{ color: '#78716c' }}>{cvName}</p>
         </div>
         <a
-          href={cvUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#"
+          onClick={(e) => { e.preventDefault(); openProtectedFile(cvUrl, user?.token); }}
           className="text-xs font-semibold px-3 py-1.5 rounded-lg transition"
           style={{ backgroundColor: 'rgba(249,115,22,0.15)', color: '#fb923c' }}
         >
@@ -128,7 +130,8 @@ const ProfileView = ({ profile, photoPreview, cvUrl, cvName, onEdit }) => (
       </div>
     )}
   </div>
-);
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import SeekerLayout from '../components/SeekerLayout';
 import { Briefcase, Building2, Download, Search, X } from 'lucide-react';
+import { openProtectedFile } from '../utils/openProtectedFile';
 
 const API = 'http://localhost:5000/api';
 
@@ -158,7 +159,10 @@ const Applications = () => {
                           {app.jobId?.title || 'Unknown Job'}
                         </Link>
                         {app.coverLetter && (
-                          <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{app.coverLetter}</p>
+                          <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.coverLetter, user?.token); }}
+                            className="block text-xs text-gray-400 hover:text-indigo-600 mt-0.5 truncate max-w-xs transition">
+                            View cover letter
+                          </a>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -183,9 +187,8 @@ const Applications = () => {
                       <td className="px-6 py-4">
                         {app.cvUrl ? (
                           <a
-                            href={app.cvUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); openProtectedFile(app.cvUrl, user?.token); }}
                             className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 transition"
                           >
                             <Download className="h-3.5 w-3.5" /> CV

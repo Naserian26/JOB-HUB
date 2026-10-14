@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
 import ScheduleModal from '../components/ScheduleModal';
+import { openProtectedFile } from '../utils/openProtectedFile';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, Tooltip,
@@ -112,6 +113,7 @@ const MatchRadar = ({ breakdown, explanation }) => {
 // ─── Kanban Card ──────────────────────────────────────────────────────────────
 
 const KanbanCard = ({ app, onStatusChange, onMessage, onSchedule }) => {
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const accentCol = COLUMNS.find(c => c.key === app.status)?.accent ?? 'bg-gray-500';
   const canSchedule = !['hired', 'rejected'].includes(app.status);
@@ -132,13 +134,16 @@ const KanbanCard = ({ app, onStatusChange, onMessage, onSchedule }) => {
 
         {/* Cover letter */}
         {app.coverLetter && (
-          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{app.coverLetter}</p>
+          <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.coverLetter, user?.token); }}
+            className="block text-xs text-slate-400 hover:text-indigo-300 line-clamp-2 leading-relaxed transition">
+            View cover letter
+          </a>
         )}
 
         {/* Actions row */}
         <div className="flex items-center justify-between pt-1 border-t border-dark-border">
           {app.cvUrl ? (
-            <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+            <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.cvUrl, user?.token); }}
               className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition">
               <Download className="h-3.5 w-3.5" /> CV
             </a>
@@ -393,11 +398,18 @@ const Applicants = () => {
                     </td>
                     <td className="px-6 py-4"><ScoreRing score={app.matchScore ?? 0} /></td>
                     <td className="px-6 py-4 max-w-xs">
-                      <p className="truncate text-xs text-slate-400">{app.coverLetter || '—'}</p>
+                      {app.coverLetter ? (
+                        <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.coverLetter, user?.token); }}
+                          className="truncate text-xs text-indigo-400 hover:text-indigo-300 transition">
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {app.cvUrl ? (
-                        <a href={app.cvUrl} target="_blank" rel="noopener noreferrer"
+                        <a href="#" onClick={(e) => { e.preventDefault(); openProtectedFile(app.cvUrl, user?.token); }}
                           className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition">
                           <Download className="h-4 w-4" /> Download
                         </a>

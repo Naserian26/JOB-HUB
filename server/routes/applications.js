@@ -66,7 +66,7 @@ router.post('/apply/:jobId', authenticate, upload.single('coverLetter'), async (
       jobId: req.params.jobId,
       seekerId: req.user.id,
       employerId: job.employerId,
-      coverLetter: req.file.path, // <--- CHANGED THIS: Save file path instead of text
+      coverLetter: `${process.env.BASE_URL || 'http://localhost:5000'}/api/files/cover-letter/${req.file.filename}`,
       expectedSalary: req.body.expectedSalary,
       availability: req.body.availability,
       cvUrl,
