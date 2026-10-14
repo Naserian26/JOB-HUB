@@ -22,7 +22,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error(error);
-      alert('Login failed');
+      alert(error.response?.data?.message || 'Login failed');
     }
   };
 

@@ -146,8 +146,8 @@ const Settings = () => {
       return setPasswordAlert({ type: 'error', message: 'All fields are required.' });
     if (newPassword !== confirmPassword)
       return setPasswordAlert({ type: 'error', message: 'New passwords do not match.' });
-    if (newPassword.length < 6)
-      return setPasswordAlert({ type: 'error', message: 'Password must be at least 6 characters.' });
+    if (newPassword.length < 8)
+      return setPasswordAlert({ type: 'error', message: 'Password must be at least 8 characters.' });
 
     setPasswordLoading(true);
     try {

@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const authenticate = require('../middleware/authenticate');
+const { isValidEmail, isValidPassword } = require('../utils/validators');
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
 // Caps brute-force attempts per endpoint: 5 tries per 15 min per IP. Each
@@ -28,7 +29,26 @@ const forgotPasswordLimiter = makeAuthLimiter();
 router.post('/register', registerLimiter, async (req, res) => {
   const { name, email, password, role } = req.body;
   console.log('Register hit:', { name, email, role });
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: 'Please provide a valid email address' });
+  }
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
+  if (!['seeker', 'employer'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be either "seeker" or "employer"' });
+  }
+
   try {
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: 'An account with this email already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ name, email, password: hashedPassword, role });
     await user.save();
@@ -39,6 +59,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'An account with this email already exists' });
+    }
     console.error('Register error:', error.message);
     res.status(500).json({ error: error.message });
   }
@@ -141,6 +164,9 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
 // ─── Reset Password ─────────────────────────────────────────────────────────
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
+  if (!isValidPassword(newPassword)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
@@ -159,6 +185,9 @@ router.post('/reset-password', async (req, res) => {
 // ─── Change Password ────────────────────────────────────────────────────────
 router.post('/change-password', authenticate, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  if (!isValidPassword(newPassword)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
   try {
     const user = await User.findById(req.user.id);
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -175,6 +204,9 @@ router.post('/change-password', authenticate, async (req, res) => {
 // ─── Change Email ────────────────────────────────────────────────────────────
 router.post('/change-email', authenticate, async (req, res) => {
   const { newEmail, password } = req.body;
+  if (!isValidEmail(newEmail)) {
+    return res.status(400).json({ message: 'Please provide a valid email address' });
+  }
   try {
     const user = await User.findById(req.user.id);
     const isMatch = await bcrypt.compare(password, user.password);
