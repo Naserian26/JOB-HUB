@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -39,7 +39,7 @@ const MatchBar = ({ label, value, barClass }) => (
 
 const MatchPanel = ({ match }) => {
   if (!match) return null;
-  const { match_score, explanation, breakdown = {} } = match;
+  const { match_score, explanation, breakdown = {}, signals = [] } = match;
   const t = scoreTheme(match_score);
 
   const bars = [
@@ -73,6 +73,17 @@ const MatchPanel = ({ match }) => {
           <MatchBar key={label} label={label} value={value} barClass={t.bar} />
         ))}
       </div>
+
+      {signals.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-white/10 pt-4">
+          {signals.map(({ key, label, detail }) => (
+            <div key={key}>
+              <p className="text-xs font-semibold text-slate-300">{label}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -155,7 +166,7 @@ const CVScorePanel = ({ jobId, headers }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <span className={`flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase ${t.text}`}>
-          <FileText className="h-3.5 w-3.5" /> CV Readiness
+          <FileText className="h-3.5 w-3.5" /> Job Match & CV Readiness
         </span>
         <button
           onClick={() => setOpen(o => !o)}
@@ -167,7 +178,10 @@ const CVScorePanel = ({ jobId, headers }) => {
 
       {/* Ring + Grid Bars */}
       <div className="flex gap-6">
-        <RingChart score={overall} stroke={t.stroke} />
+        <div>
+          <RingChart score={overall} stroke={t.stroke} />
+          <p className="mt-1 text-center text-[9px] text-slate-500">Job match</p>
+        </div>
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           {bars.map(({ label, value }) => (
             <MatchBar key={label} label={label} value={value} barClass={t.bar} />
@@ -622,6 +636,31 @@ const JobDetail = () => {
           )}
 
           <hr className="border-dark-border" />
+
+          {(job.requiredSkills?.length > 0 || job.preferredSkills?.length > 0) && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              {job.requiredSkills?.length > 0 && (
+                <div>
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Required skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {job.requiredSkills.map(skill => (
+                      <span key={skill} className="rounded-lg bg-lime-500/10 ring-1 ring-lime-300/20 px-3 py-1 text-xs text-lime-200">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {job.preferredSkills?.length > 0 && (
+                <div>
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Preferred skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {job.preferredSkills.map(skill => (
+                      <span key={skill} className="rounded-lg bg-slate-900 ring-1 ring-dark-border px-3 py-1 text-xs text-slate-300">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           {job.description ? (

@@ -9,6 +9,8 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const authenticate = require('../middleware/authenticate');
 const { isValidEmail, isValidPassword } = require('../utils/validators');
+const { isSmsConfigured, normalizePhoneNumber } = require('../utils/smsAlerts');
+const { isAdminEmail } = require('../utils/adminAccess');
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
 // Caps brute-force attempts per endpoint: 5 tries per 15 min per IP. Each
@@ -27,8 +29,7 @@ const forgotPasswordLimiter = makeAuthLimiter();
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 router.post('/register', registerLimiter, async (req, res) => {
-  const { name, email, password, role } = req.body;
-  console.log('Register hit:', { name, email, role });
+  const { name, email, password, role, companyName, companyWebsite } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ message: 'Name is required' });
@@ -42,6 +43,20 @@ router.post('/register', registerLimiter, async (req, res) => {
   if (!['seeker', 'employer'].includes(role)) {
     return res.status(400).json({ message: 'Role must be either "seeker" or "employer"' });
   }
+  if (role === 'employer') {
+    if (typeof companyName !== 'string' || !companyName.trim() || companyName.trim().length > 120) {
+      return res.status(400).json({ message: 'A company name of 1 to 120 characters is required' });
+    }
+    if (typeof companyWebsite !== 'string' || !companyWebsite.trim()) {
+      return res.status(400).json({ message: 'A company website is required' });
+    }
+    try {
+      const website = new URL(companyWebsite);
+      if (!['http:', 'https:'].includes(website.protocol)) throw new Error('invalid protocol');
+    } catch {
+      return res.status(400).json({ message: 'Enter a valid company website URL' });
+    }
+  }
 
   try {
     const existing = await User.findOne({ email });
@@ -50,13 +65,28 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, role });
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      ...(role === 'employer' && {
+        companyName: companyName.trim(),
+        companyWebsite: companyWebsite.trim(),
+        employerApprovalStatus: 'pending',
+      }),
+    });
     await user.save();
     console.log('User saved:', user._id);
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user._id, name: user.name, email: user.email, role: user.role,
+        companyName: user.companyName,
+        employerApprovalStatus: user.employerApprovalStatus || 'approved',
+        isAdmin: isAdminEmail(user.email),
+      }
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -78,9 +108,35 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email } });
+    res.json({
+      token,
+      user: {
+        id: user._id, name: user.name, role: user.role, email: user.email,
+        companyName: user.companyName,
+        employerApprovalStatus: user.employerApprovalStatus || 'approved',
+        isAdmin: isAdminEmail(user.email),
+      },
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/employer-status', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select('role companyName companyWebsite employerApprovalStatus employerReviewNote');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'employer') return res.status(403).json({ message: 'Employer account required' });
+    res.json({
+      companyName: user.companyName,
+      companyWebsite: user.companyWebsite,
+      employerApprovalStatus: user.employerApprovalStatus || 'approved',
+      employerReviewNote: user.employerReviewNote,
+    });
+  } catch (error) {
+    console.error('GET /employer-status error:', error.message);
+    res.status(500).json({ message: 'Failed to load employer application status' });
   }
 });
 
@@ -226,8 +282,10 @@ router.post('/change-email', authenticate, async (req, res) => {
 // ─── Get Settings ────────────────────────────────────────────────────────────
 router.get('/settings', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('emailNotifications profileVisible email name');
-    res.json(user);
+    const user = await User.findById(req.user.id)
+      .select('emailNotifications profileVisible email name phoneNumber smsAlertsEnabled companyName companyWebsite employerApprovalStatus employerReviewNote');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ ...user.toObject(), smsAlertsAvailable: isSmsConfigured() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -235,13 +293,49 @@ router.get('/settings', authenticate, async (req, res) => {
 
 // ─── Update Settings ─────────────────────────────────────────────────────────
 router.post('/settings', authenticate, async (req, res) => {
-  const { emailNotifications, profileVisible } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { emailNotifications, profileVisible },
-      { new: true }
-    );
+    const updates = {};
+    if (typeof req.body.emailNotifications === 'boolean') {
+      updates.emailNotifications = req.body.emailNotifications;
+    }
+    if (typeof req.body.profileVisible === 'boolean') {
+      updates.profileVisible = req.body.profileVisible;
+    }
+
+    if (req.user.role === 'seeker') {
+      let effectivePhoneNumber;
+      if (typeof req.body.phoneNumber === 'string') {
+        const phoneNumber = req.body.phoneNumber.trim();
+        if (phoneNumber) {
+          const normalized = normalizePhoneNumber(phoneNumber);
+          if (!normalized) {
+            return res.status(400).json({ message: 'Enter a valid Kenyan phone number, e.g. 0712345678 or +254712345678' });
+          }
+          updates.phoneNumber = normalized;
+          effectivePhoneNumber = normalized;
+        } else {
+          updates.phoneNumber = '';
+          effectivePhoneNumber = '';
+        }
+      }
+      if (typeof req.body.smsAlertsEnabled === 'boolean') {
+        if (req.body.smsAlertsEnabled && !isSmsConfigured()) {
+          return res.status(503).json({ message: 'SMS alerts are not configured yet. Please try again later.' });
+        }
+        if (req.body.smsAlertsEnabled && effectivePhoneNumber === undefined) {
+          const currentUser = await User.findById(req.user.id).select('phoneNumber');
+          effectivePhoneNumber = currentUser?.phoneNumber || '';
+        }
+        if (req.body.smsAlertsEnabled && !effectivePhoneNumber) {
+          return res.status(400).json({ message: 'Add your phone number before enabling SMS alerts' });
+        }
+        updates.smsAlertsEnabled = req.body.smsAlertsEnabled;
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true })
+      .select('emailNotifications profileVisible email name phoneNumber smsAlertsEnabled companyName companyWebsite employerApprovalStatus employerReviewNote');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ message: 'Settings updated', user });
   } catch (err) {
     res.status(500).json({ error: err.message });

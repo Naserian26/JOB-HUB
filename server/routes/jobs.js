@@ -4,14 +4,47 @@ const mongoose = require('mongoose');
 const Job = require('../models/Job');
 const Application = require('../models/Application');
 const authenticate = require('../middleware/authenticate');
+const requireApprovedEmployer = require('../middleware/requireApprovedEmployer');
+const { sendJobAlerts } = require('../utils/smsAlerts');
+
+const normalizeSkills = (skills) => {
+  if (skills === undefined) return [];
+  if (!Array.isArray(skills)) throw new Error('Skills must be provided as a list');
+  const seen = new Set();
+  const normalized = skills.map(skill => {
+    if (typeof skill !== 'string') throw new Error('Each skill must be text');
+    return skill.trim();
+  }).filter(skill => {
+    const key = skill.toLowerCase();
+    if (!skill || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (normalized.some(skill => skill.length > 60)) {
+    throw new Error('Each skill must be 60 characters or fewer');
+  }
+  if (normalized.length > 30) {
+    throw new Error('You can add up to 30 skills per list');
+  }
+  return normalized;
+};
 
 // =====================
 // CREATE JOB
 // =====================
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'employer') {
       return res.status(403).json({ message: 'Only employers can post jobs' });
+    }
+
+    let requiredSkills;
+    let preferredSkills;
+    try {
+      requiredSkills = normalizeSkills(req.body.requiredSkills);
+      preferredSkills = normalizeSkills(req.body.preferredSkills);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
     }
 
     const jobData = {
@@ -22,11 +55,17 @@ router.post('/', authenticate, async (req, res) => {
       experienceLevel: req.body.experienceLevel,
       salaryMin: Number(req.body.salaryMin),
       salaryMax: Number(req.body.salaryMax),
+      requiredSkills,
+      preferredSkills,
       employerId: new mongoose.Types.ObjectId(req.user.id),
     };
 
     const job = new Job(jobData);
     await job.save();
+
+    sendJobAlerts(job).catch(error => {
+      console.error(`Failed to process SMS alerts for job ${job._id}:`, error.message);
+    });
 
     res.status(201).json(job);
 
@@ -65,7 +104,7 @@ router.get('/', async (req, res) => {
 // =====================
 // GET EMPLOYER'S OWN JOBS
 // =====================
-router.get('/employer', authenticate, async (req, res) => {
+router.get('/employer', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
     if (req.user.role !== 'employer') {
       return res.status(403).json({ message: 'Access denied' });
@@ -107,9 +146,27 @@ router.get('/:id', async (req, res) => {
 // =====================
 // UPDATE JOB
 // =====================
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
-    const job = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const allowedFields = ['title', 'description', 'category', 'location', 'experienceLevel', 'salaryMin', 'salaryMax'];
+    const updates = Object.fromEntries(
+      allowedFields
+        .filter(field => req.body[field] !== undefined)
+        .map(field => [field, req.body[field]])
+    );
+    try {
+      for (const field of ['requiredSkills', 'preferredSkills']) {
+        if (req.body[field] !== undefined) updates[field] = normalizeSkills(req.body[field]);
+      }
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    const job = await Job.findOneAndUpdate(
+      { _id: req.params.id, employerId: req.user.id },
+      updates,
+      { new: true, runValidators: true }
+    );
+    if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json(job);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -119,10 +176,10 @@ router.put('/:id', authenticate, async (req, res) => {
 // =====================
 // TOGGLE JOB STATUS
 // =====================
-router.patch('/:id/status', authenticate, async (req, res) => {
+router.patch('/:id/status', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
-    if (req.user.role !== 'employer') {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!['active', 'inactive', 'closed'].includes(req.body.status)) {
+      return res.status(400).json({ message: 'Invalid job status' });
     }
 
     const job = await Job.findOneAndUpdate(
@@ -143,9 +200,10 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 // =====================
 // DELETE JOB
 // =====================
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
-    await Job.findByIdAndDelete(req.params.id);
+    const job = await Job.findOneAndDelete({ _id: req.params.id, employerId: req.user.id });
+    if (!job) return res.status(404).json({ message: 'Job not found' });
     res.json({ message: 'Job deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });

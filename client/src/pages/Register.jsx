@@ -6,7 +6,9 @@ import axios from 'axios';
 
 const Register = () => {
   const [role, setRole] = useState('seeker');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({
+    name: '', email: '', password: '', companyName: '', companyWebsite: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -19,10 +21,14 @@ const Register = () => {
         role
       });
       login(res.data.user, res.data.token);
+      if (res.data.user.isAdmin) {
+        navigate('/admin/employers');
+        return;
+      }
       if (role === 'seeker') {
         navigate('/seeker/dashboard');
       } else {
-        navigate('/employer/dashboard');
+        navigate('/employer/application-status');
       }
     } catch (error) {
       console.error(error);
@@ -78,6 +84,37 @@ const Register = () => {
               />
             </div>
           </div>
+
+          {role === 'employer' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-dark-primary" htmlFor="company-name">Company Name</label>
+                <input
+                  id="company-name"
+                  type="text"
+                  required
+                  maxLength={120}
+                  value={formData.companyName}
+                  onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-dark-border bg-dark-bg px-3 py-2 text-sm text-dark-primary placeholder-dark-secondary/50"
+                  placeholder="Your registered company name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-primary" htmlFor="company-website">Company Website</label>
+                <input
+                  id="company-website"
+                  type="url"
+                  required
+                  value={formData.companyWebsite}
+                  onChange={e => setFormData({ ...formData, companyWebsite: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-dark-border bg-dark-bg px-3 py-2 text-sm text-dark-primary placeholder-dark-secondary/50"
+                  placeholder="https://company.example"
+                />
+                <p className="mt-1 text-xs text-dark-secondary">Employer accounts need admin approval before posting jobs.</p>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-dark-primary">Email Address</label>

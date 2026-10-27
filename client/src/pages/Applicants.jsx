@@ -14,7 +14,7 @@ import {
   ResponsiveContainer, Tooltip,
 } from 'recharts';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const COLUMNS = [
   { key: 'pending',   label: 'Pending',   dot: 'bg-gray-400',  accent: 'bg-gray-500'  },

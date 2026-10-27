@@ -4,6 +4,7 @@ const Interview = require('../models/Interview');
 const Application = require('../models/Application');
 const authenticate = require('../middleware/authenticate');
 const authorizeRoles = require('../middleware/authorizeRoles');
+const requireApprovedEmployer = require('../middleware/requireApprovedEmployer');
 const { sendInterviewInviteEmail, sendInterviewCancelledEmail } = require('../utils/emailService');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -14,7 +15,7 @@ const sendInterviewMessage = async (io, recipientId, payload) => {
 };
 
 // ─── POST /api/interviews ─────────────────────────────────────────────────────
-router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
+router.post('/', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const { applicationId, proposedSlots, location, meetingLink, notes } = req.body;
 
@@ -92,7 +93,7 @@ router.post('/', authenticate, authorizeRoles('employer'), async (req, res) => {
 });
 
 // ─── GET /api/interviews ──────────────────────────────────────────────────────
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
     const { status } = req.query;
     const isEmployer = req.user.role === 'employer';
@@ -118,7 +119,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // ─── GET /api/interviews/:id ──────────────────────────────────────────────────
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id)
       .populate('candidate', 'name email profilePhoto')
@@ -183,7 +184,7 @@ router.patch('/:id/confirm', authenticate, authorizeRoles('seeker'), async (req,
 });
 
 // ─── PATCH /api/interviews/:id/cancel ────────────────────────────────────────
-router.patch('/:id/cancel', authenticate, async (req, res) => {
+router.patch('/:id/cancel', authenticate, requireApprovedEmployer, async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id)
       .populate('job', 'title')
@@ -238,7 +239,7 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
 });
 
 // ─── PATCH /api/interviews/:id/reschedule ────────────────────────────────────
-router.patch('/:id/reschedule', authenticate, authorizeRoles('employer'), async (req, res) => {
+router.patch('/:id/reschedule', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const { proposedSlots, notes } = req.body;
     if (!proposedSlots?.length) {
@@ -278,7 +279,7 @@ router.patch('/:id/reschedule', authenticate, authorizeRoles('employer'), async 
 });
 
 // ─── PATCH /api/interviews/:id/complete ──────────────────────────────────────
-router.patch('/:id/complete', authenticate, authorizeRoles('employer'), async (req, res) => {
+router.patch('/:id/complete', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
     if (!interview) return res.status(404).json({ message: 'Interview not found.' });

@@ -5,9 +5,11 @@ const Job = require('../models/Job');
 const Profile = require('../models/Profile');
 const Notification = require('../models/Notification');
 const { getIO } = require('../utils/socket');
-const { calculateMatch } = require('../utils/matcherHelper');
+const { buildMatchData, calculateMatch } = require('../utils/matcherHelper');
 const upload = require('../middleware/upload'); // <--- ADDED THIS
 const authenticate = require('../middleware/authenticate');
+const requireApprovedEmployer = require('../middleware/requireApprovedEmployer');
+const authorizeRoles = require('../middleware/authorizeRoles');
 
 // 1. Apply to Job (Seeker) - WITH AI MATCHING
 // <--- ADDED upload.single('coverLetter') BELOW
@@ -27,24 +29,7 @@ router.post('/apply/:jobId', authenticate, upload.single('coverLetter'), async (
 
     const seekerProfile = await Profile.findOne({ userId: req.user.id });
 
-    const jobData = {
-      title: job.title,
-      description: job.description,
-      required_skills: [],
-      location: job.location,
-      experienceLevel: job.experienceLevel,
-      salary_min: 0,
-      salary_max: job.salary
-    };
-
-    const seekerData = {
-      skills: (seekerProfile && seekerProfile.skills) || [],
-      experience: (seekerProfile && seekerProfile.experience) || 'Entry',
-      location: (seekerProfile && seekerProfile.location) || 'Remote',
-      salary_expectation: (seekerProfile && seekerProfile.salaryExpectation) || 0,
-      bio: (seekerProfile && seekerProfile.bio) || 'Candidate'
-    };
-
+    const { seekerData, jobData } = buildMatchData(seekerProfile, job);
     const aiResult = await calculateMatch(seekerData, jobData);
     const matchScore = aiResult.match_score;
     const matchBreakdown = aiResult.breakdown || {};
@@ -69,12 +54,12 @@ router.post('/apply/:jobId', authenticate, upload.single('coverLetter'), async (
     res.status(201).json({ ...application.toObject(), explanation: matchExplanation });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(error.statusCode || 500).json({ error: error.message });
   }
 });
 
 // 2. Update Status (Employer) - REAL TIME UPDATE
-router.put('/status/:applicationId', authenticate, async (req, res) => {
+router.put('/status/:applicationId', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   const { status } = req.body;
   try {
     const application = await Application.findById(req.params.applicationId).populate('jobId');
@@ -116,7 +101,7 @@ router.get('/my-applications', authenticate, async (req, res) => {
 });
 
 // 4. Get Applicants for a Job (Employer)
-router.get('/job/:jobId/applicants', authenticate, async (req, res) => {
+router.get('/job/:jobId/applicants', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const job = await Job.findById(req.params.jobId);
     if (!job || job.employerId.toString() !== req.user.id) {
@@ -133,7 +118,7 @@ router.get('/job/:jobId/applicants', authenticate, async (req, res) => {
 });
 
 // 5. Get Employer Stats for Dashboard
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const employerId = req.user.id;
     const applicants = await Application.countDocuments({ employerId });
@@ -147,8 +132,7 @@ router.get('/stats', authenticate, async (req, res) => {
 });
 
 // 6. Get ALL applicants across all employer jobs
-router.get('/employer/all', authenticate, async (req, res) => {
-  if (req.user.role !== 'employer') return res.status(403).json({ message: 'Access denied' });
+router.get('/employer/all', authenticate, requireApprovedEmployer, authorizeRoles('employer'), async (req, res) => {
   try {
     const applications = await Application.find({ employerId: req.user.id })
       .populate('seekerId', 'name email location')
@@ -170,28 +154,11 @@ router.post('/match-preview', authenticate, async (req, res) => {
 
     const seekerProfile = await Profile.findOne({ userId: req.user.id });
 
-    const jobData = {
-      title: job.title,
-      description: job.description,
-      required_skills: [],
-      location: job.location,
-      experienceLevel: job.experienceLevel,
-      salary_min: 0,
-      salary_max: job.salary
-    };
-
-    const seekerData = {
-      skills: seekerProfile?.skills || [],
-      experience: seekerProfile?.experience || 'Entry',
-      location: seekerProfile?.location || 'Remote',
-      salary_expectation: seekerProfile?.salaryExpectation || 0,
-      bio: seekerProfile?.bio || ''
-    };
-
+    const { seekerData, jobData } = buildMatchData(seekerProfile, job);
     const aiResult = await calculateMatch(seekerData, jobData);
     res.json(aiResult);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(error.statusCode || 500).json({ error: error.message });
   }
 });
 
@@ -246,111 +213,35 @@ router.get('/cv-score/:jobId', authenticate, async (req, res) => {
     const profile = await Profile.findOne({ userId: req.user.id });
     if (!profile) return res.status(404).json({ message: 'Profile not found. Complete your profile first.' });
 
-    // --- 1. Skills score ---
-    const jobText = `${job.title} ${job.description}`.toLowerCase();
-    const seekerSkills = profile.skills || [];
-    const matchedSkills = seekerSkills.filter(s => jobText.includes(s.toLowerCase()));
-    const missingSkills = seekerSkills.filter(s => !jobText.includes(s.toLowerCase()));
-    const skillsScore = seekerSkills.length
-      ? Math.round((matchedSkills.length / seekerSkills.length) * 100)
-      : 0;
-
-    // --- 2. Experience score ---
-    const expMap = { 'Entry': 1, 'Junior': 2, 'Mid': 3, 'Senior': 4, 'Lead': 5, 'Manager': 5 };
-    const seekerExp = expMap[profile.experience] ?? 2;
-    const jobExp    = expMap[job.experienceLevel]  ?? 2;
-    const expScore  = seekerExp >= jobExp
-      ? 100
-      : Math.round((seekerExp / jobExp) * 100);
-
-    // --- 3. Location score ---
-    const isRemote = job.location?.toLowerCase().includes('remote');
-    const locationMatch = profile.location?.toLowerCase() === job.location?.toLowerCase();
-    const locationScore = (!job.location || isRemote || locationMatch) ? 100 : 50;
-
-    // --- 4. Salary score ---
-    let salaryScore = 100;
-    if (profile.salaryExpectation && job.salaryMax) {
-      if (profile.salaryExpectation <= job.salaryMax)            salaryScore = 100;
-      else if (profile.salaryExpectation <= job.salaryMax * 1.15) salaryScore = 65;
-      else                                                         salaryScore = 30;
-    }
-
-    // --- 5. CV completeness score ---
-    const cvScore = profile.cvUrl ? 100 : 40;
-
-    // --- Weighted overall ---
-    const overall = Math.round(
-      skillsScore   * 0.40 +
-      expScore      * 0.25 +
-      salaryScore   * 0.15 +
-      locationScore * 0.10 +
-      cvScore       * 0.10
-    );
-
-    // --- Human-readable signals ---
+    const { seekerData, jobData } = buildMatchData(profile, job);
+    const match = await calculateMatch(seekerData, jobData);
+    const cvScore = profile.cvUrl ? 100 : 0;
     const signals = [
-      {
-        key: 'skills',
-        label: 'Skill match',
-        score: skillsScore,
-        detail: matchedSkills.length
-          ? `${matchedSkills.length} of ${seekerSkills.length} skills match this role`
-          : 'No skills on your profile match this role yet',
-      },
-      {
-        key: 'experience',
-        label: 'Experience level',
-        score: expScore,
-        detail: expScore === 100
-          ? `Your experience meets the ${job.experienceLevel} requirement`
-          : `Role needs ${job.experienceLevel} level — consider highlighting relevant projects`,
-      },
-      {
-        key: 'salary',
-        label: 'Salary alignment',
-        score: salaryScore,
-        detail: salaryScore === 100
-          ? 'Your expectation is within the listed range'
-          : salaryScore === 65
-          ? 'Your expectation is slightly above range — still competitive'
-          : 'Your expectation exceeds the range — may affect shortlisting',
-      },
-      {
-        key: 'location',
-        label: 'Location fit',
-        score: locationScore,
-        detail: locationScore === 100
-          ? isRemote ? 'Remote role — no location conflict' : 'Location matches'
-          : `Role is based in ${job.location} — your profile shows ${profile.location || 'no location'}`,
-      },
+      ...match.signals,
       {
         key: 'cv',
         label: 'CV attached',
         score: cvScore,
         detail: profile.cvUrl
-          ? 'CV is on your profile and will be sent with your application'
-          : 'No CV uploaded — add one to your profile to boost your chances',
+          ? 'A CV is saved on your profile'
+          : 'No CV uploaded — add one to your profile before applying',
       },
     ];
 
     res.json({
-      overall,
+      overall: match.match_score,
       breakdown: {
-        skills:     skillsScore,
-        experience: expScore,
-        salary:     salaryScore,
-        location:   locationScore,
-        cv:         cvScore,
+        ...match.breakdown,
+        cv: cvScore,
       },
       signals,
-      matchedSkills,
-      missingSkills,
+      matchedSkills: match.matched_skills || [],
+      missingSkills: match.missing_skills || [],
       hasCv: !!profile.cvUrl,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(error.statusCode || 500).json({ error: error.message });
   }
 });
 

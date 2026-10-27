@@ -15,7 +15,11 @@ const Login = () => {
     try {
       const res = await axios.post('http://localhost:5000/api/auth/login', formData);
       login(res.data.user, res.data.token);
-      if (res.data.user.role === 'employer') {
+      if (res.data.user.isAdmin) {
+        navigate('/admin/employers');
+      } else if (res.data.user.role === 'employer' && res.data.user.employerApprovalStatus !== 'approved') {
+        navigate('/employer/application-status');
+      } else if (res.data.user.role === 'employer') {
         navigate('/employer/dashboard');
       } else {
         navigate('/seeker/dashboard');

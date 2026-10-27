@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { Briefcase, Plus, Eye, Pencil, Trash2 } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const ManageJobs = () => {
   const { user } = useAuth();

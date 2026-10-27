@@ -32,6 +32,8 @@ const AddJob = () => {
     salaryMin: 0,
     salaryMax: 0,
     description: '',
+    requiredSkills: '',
+    preferredSkills: '',
     category: 'Software Development',
     location: 'Remote',
     experienceLevel: 'Mid'
@@ -40,6 +42,10 @@ const AddJob = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const parseSkills = (skills) => [...new Set(
+    skills.split(/[,\n]/).map(skill => skill.trim()).filter(Boolean)
+  )];
 
   const nextStep = () => {
     if (step === 1 && (!formData.title || !formData.salaryMin)) return alert('Please fill required fields');
@@ -52,7 +58,12 @@ const AddJob = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/jobs', formData, { 
+      const payload = {
+        ...formData,
+        requiredSkills: parseSkills(formData.requiredSkills),
+        preferredSkills: parseSkills(formData.preferredSkills),
+      };
+      await axios.post('http://localhost:5000/api/jobs', payload, {
         headers: { Authorization: `Bearer ${token}` } 
       });
 
@@ -220,6 +231,31 @@ const AddJob = () => {
                     <option value="Executive" className="bg-slate-800 text-slate-100">Executive</option>
                   </select>
                 </div>
+                <div>
+                  <label htmlFor="requiredSkills" className="block text-sm font-medium text-slate-300">Required Skills</label>
+                  <textarea
+                    id="requiredSkills"
+                    name="requiredSkills"
+                    value={formData.requiredSkills}
+                    onChange={handleChange}
+                    rows={3}
+                    className="mt-1 block w-full border border-dark-border bg-slate-900 text-slate-100 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-lime-accent focus:border-lime-accent outline-none transition"
+                    placeholder="e.g. JavaScript, React, API design"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Separate skills with commas or new lines. These carry the most weight in matching.</p>
+                </div>
+                <div>
+                  <label htmlFor="preferredSkills" className="block text-sm font-medium text-slate-300">Preferred Skills <span className="font-normal text-slate-500">(optional)</span></label>
+                  <textarea
+                    id="preferredSkills"
+                    name="preferredSkills"
+                    value={formData.preferredSkills}
+                    onChange={handleChange}
+                    rows={2}
+                    className="mt-1 block w-full border border-dark-border bg-slate-900 text-slate-100 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-lime-accent focus:border-lime-accent outline-none transition"
+                    placeholder="e.g. TypeScript, Docker"
+                  />
+                </div>
               </div>
             )}
 
@@ -235,6 +271,18 @@ const AddJob = () => {
                   <span>${formData.salaryMin} - ${formData.salaryMax}</span>
                 </div>
                 <div className="ql-editor text-slate-300 mt-4" dangerouslySetInnerHTML={{ __html: formData.description }} />
+                {parseSkills(formData.requiredSkills).length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-semibold text-slate-200">Required skills</h3>
+                    <p className="mt-1 text-sm text-slate-400">{parseSkills(formData.requiredSkills).join(', ')}</p>
+                  </div>
+                )}
+                {parseSkills(formData.preferredSkills).length > 0 && (
+                  <div className="mt-3">
+                    <h3 className="text-sm font-semibold text-slate-200">Preferred skills</h3>
+                    <p className="mt-1 text-sm text-slate-400">{parseSkills(formData.preferredSkills).join(', ')}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

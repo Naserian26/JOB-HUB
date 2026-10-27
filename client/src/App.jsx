@@ -14,6 +14,8 @@ import JobListings from './pages/JobListings';
 import JobDetail from './pages/JobDetail';
 import SeekerDashboard from './pages/SeekerDashboard';
 import SeekerProfile from './pages/SeekerProfile';
+import SavedJobs from './pages/SavedJobs';
+import SavedSearches from './pages/SavedSearches';
 
 // Employer Pages
 import EmployerDashboard from './pages/EmployerDashboard';
@@ -31,15 +33,22 @@ import InterviewCalendar from './pages/InterviewCalendar';
 import SeekerApplications from './pages/SeekerApplications';
 import ResetPassword from './pages/ResetPassword';
 import SeekerInterviews from './pages/SeekerInterviews';
+import EmployerApplicationStatus from './pages/EmployerApplicationStatus';
+import AdminEmployerApplications from './pages/AdminEmployerApplications';
 // AUTH
 import { useAuth } from './hooks/useAuth';
 import AuthProvider from './context/AuthProvider';
 
-const ProtectedRoute = ({ children, role }) => {
+const ProtectedRoute = ({ children, role, allowPendingEmployer = false, adminOnly = false }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  if (adminOnly && !user.isAdmin) return <Navigate to="/" />;
   if (role && user.role !== role) return <Navigate to="/" />;
+  if (role === 'employer' && !allowPendingEmployer
+    && user.employerApprovalStatus && user.employerApprovalStatus !== 'approved') {
+    return <Navigate to="/employer/application-status" replace />;
+  }
   return children;
 };
 
@@ -47,10 +56,11 @@ function AppRoutes() {
   const location = useLocation();
 
   const hideNavbar = ['/', '/login', '/register', '/forgot-password', '/messages'];
-  const hideFooter = location.pathname.startsWith('/employer') || location.pathname.startsWith('/seeker') || location.pathname.startsWith('/messages');
+  const hideFooter = location.pathname.startsWith('/employer') || location.pathname.startsWith('/seeker') || location.pathname.startsWith('/messages') || location.pathname.startsWith('/admin');
  const showNavbar = !hideNavbar.includes(location.pathname)
   && !location.pathname.startsWith('/employer')
   && !location.pathname.startsWith('/seeker')
+  && !location.pathname.startsWith('/admin')
   && location.pathname !== '/messages';
 
   return (
@@ -63,6 +73,9 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin/employers" element={
+            <ProtectedRoute adminOnly><AdminEmployerApplications /></ProtectedRoute>
+          } />
 
           {/* Seeker */}
           <Route path="/jobs" element={<JobListings />} />
@@ -73,11 +86,20 @@ function AppRoutes() {
           <Route path="/seeker/profile" element={
             <ProtectedRoute role="seeker"><SeekerProfile /></ProtectedRoute>
           } />
+          <Route path="/seeker/saved-jobs" element={
+            <ProtectedRoute role="seeker"><SavedJobs /></ProtectedRoute>
+          } />
+          <Route path="/seeker/job-alerts" element={
+            <ProtectedRoute role="seeker"><SavedSearches /></ProtectedRoute>
+          } />
           <Route path="/seeker/settings" element={
             <ProtectedRoute role="seeker"><Settings /></ProtectedRoute>
           } />
 
           {/* Employer */}
+          <Route path="/employer/application-status" element={
+            <ProtectedRoute role="employer" allowPendingEmployer><EmployerApplicationStatus /></ProtectedRoute>
+          } />
           <Route path="/employer/dashboard" element={
             <ProtectedRoute role="employer"><EmployerDashboard /></ProtectedRoute>
           } />

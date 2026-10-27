@@ -10,7 +10,7 @@ import {
 import SeekerLayout from '../components/SeekerLayout';
 import { openProtectedFile } from '../utils/openProtectedFile';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 // ─── View Mode Card ───────────────────────────────────────────────────────────
 

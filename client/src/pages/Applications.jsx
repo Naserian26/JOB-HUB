@@ -6,7 +6,7 @@ import SeekerLayout from '../components/SeekerLayout';
 import { Briefcase, Building2, Download, Search, X } from 'lucide-react';
 import { openProtectedFile } from '../utils/openProtectedFile';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const Applications = () => {
   const { user } = useAuth();

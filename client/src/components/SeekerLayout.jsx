@@ -5,11 +5,11 @@ import axios from 'axios';
 import { getSocket } from '../utils/socket';
 import {
   Briefcase, LayoutDashboard, FileText, User,
-  Settings, LogOut, Building2, Menu, X, Bell, Calendar,
+  Settings, LogOut, Building2, Menu, X, Bell, Calendar, Bookmark,
   CheckCircle, Info, Clock, XCircle, MessageSquare
 } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const statusIcon = (status) => {
   switch (status) {
@@ -97,6 +97,8 @@ const SeekerLayout = ({ children, profile }) => {
     { to: '/jobs',              icon: <Briefcase className="h-5 w-5" />,       label: 'Find Jobs' },
     { to: '/companies',         icon: <Building2 className="h-5 w-5" />,       label: 'Companies' },
     { to: '/applications',      icon: <FileText className="h-5 w-5" />,        label: 'My Applications' },
+    { to: '/seeker/saved-jobs', icon: <Bookmark className="h-5 w-5" />,         label: 'Saved Jobs' },
+    { to: '/seeker/job-alerts', icon: <Bell className="h-5 w-5" />,              label: 'Job Alerts' },
     { to: '/seeker/interviews', icon: <Calendar className="h-5 w-5" />,        label: 'Interviews' },
     { to: '/messages',          icon: <MessageSquare className="h-5 w-5" />,   label: 'Messages' },
     { to: '/seeker/profile',    icon: <User className="h-5 w-5" />,            label: 'My Profile' },

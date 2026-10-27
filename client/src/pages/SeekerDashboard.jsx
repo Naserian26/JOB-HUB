@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import SeekerLayout from '../components/SeekerLayout';
 import { Clock, FileText, TrendingUp, XCircle, Briefcase, Building2, X, CheckCircle, Info, MapPin, DollarSign, Sparkles } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const TOAST_DURATION = 5000;
 

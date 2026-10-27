@@ -1,12 +1,22 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Users, TrendingUp, Briefcase, Clock, Search } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Zap, Users, TrendingUp, Briefcase, Clock, Search, Sparkles, Check, FileText, UserRound, Compass } from 'lucide-react';
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+
+  const submitSearch = (event) => {
+    event.preventDefault();
+    const query = search.trim();
+    navigate(query ? `/jobs?search=${encodeURIComponent(query)}` : '/jobs');
+  };
+
   return (
     <div className="min-h-screen bg-dark-bg">
 
       {/* Navbar */}
-      <nav className="bg-dark-bg px-6 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-dark-border\">
+      <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-dark-border bg-dark-bg px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
           <div className="bg-lime-500 p-1.5 rounded-lg">
             <Briefcase className="h-5 w-5 text-dark-bg" />
@@ -24,96 +34,113 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative bg-dark-bg py-20 lg:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-
-            <span className="inline-flex items-center gap-2 py-1 px-4 rounded-full bg-lime-500/10 text-lime-500 text-sm font-medium mb-6 border border-lime-500/30">
-              ✦ AI-Powered Recruitment Platform
+      <section className="relative isolate overflow-hidden border-b border-dark-border bg-dark-bg py-16 sm:py-20 lg:py-24">
+        <div className="pointer-events-none absolute -right-24 -top-28 -z-10 h-96 w-96 rounded-full bg-lime-500/10 blur-3xl" />
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+          <div>
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-lime-500/30 bg-lime-500/10 px-4 py-1.5 text-sm font-medium text-lime-500">
+              <Sparkles className="h-4 w-4" /> AI-powered job matching
             </span>
-
-            <h1 className="text-4xl md:text-6xl font-extrabold text-dark-primary tracking-tight mb-6">
-              Find your <span className="text-lime-500">dream job</span><br />with Job Hub
+            <h1 className="mb-6 max-w-2xl text-4xl font-extrabold tracking-tight text-dark-primary sm:text-5xl lg:text-6xl">
+              Your next move starts <span className="text-lime-500">here.</span>
             </h1>
-
-            <p className="text-lg text-dark-secondary mb-8 max-w-2xl mx-auto">
-              Your dream career is closer than you think. Find opportunities that help you grow — powered by AI.
+            <p className="mb-8 max-w-xl text-lg leading-relaxed text-dark-secondary">
+              Find roles that fit your skills, get a clearer view of your match, and manage your applications in one place.
             </p>
 
-            {/* Search Bar */}
-            <div className="flex items-center gap-3 bg-dark-card border border-dark-border rounded-lg px-4 py-3 max-w-lg mx-auto mb-8">
-              <Search className="w-4 h-4 text-dark-secondary/50 shrink-0" />
+            <form onSubmit={submitSearch} className="mb-5 flex max-w-xl items-center gap-3 rounded-xl border border-dark-border bg-dark-card p-2 pl-4 shadow-lg shadow-black/10 focus-within:border-lime-500/50">
+              <Search className="h-5 w-5 shrink-0 text-dark-secondary/60" />
               <input
-                type="text"
-                placeholder="Job title, skill, or company..."
-                className="bg-transparent flex-1 text-sm text-dark-primary placeholder-dark-secondary/50 outline-none"
+                type="search"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Role, skill, or company"
+                aria-label="Search jobs by role, skill, or company"
+                className="min-w-0 flex-1 bg-transparent py-2 text-sm text-dark-primary outline-none placeholder:text-dark-secondary/50"
               />
-              <Link
-                to="/jobs"
-                className="bg-lime-500 text-dark-bg text-sm px-4 py-1.5 rounded-md hover:bg-lime-600 transition shrink-0 font-semibold"
-              >
+              <button type="submit" className="shrink-0 rounded-lg bg-lime-500 px-4 py-2.5 text-sm font-semibold text-dark-bg transition hover:bg-lime-600">
                 Search
-              </Link>
-            </div>
-
-            {/* Role Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+              </button>
+            </form>
+            <div className="mb-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 to="/jobs"
-                className="flex items-center justify-center gap-2 bg-lime-500 text-dark-bg px-8 py-3 rounded-lg font-semibold hover:bg-lime-600 transition"
+                className="flex items-center justify-center gap-2 rounded-lg bg-lime-500 px-6 py-3 font-semibold text-dark-bg transition hover:bg-lime-600"
               >
-                <Users className="w-4 h-4" /> I'm looking for a job
+                <Users className="h-4 w-4" /> Explore jobs
               </Link>
               <Link
                 to="/register"
-                className="flex items-center justify-center gap-2 border border-dark-border text-dark-primary px-8 py-3 rounded-lg font-semibold hover:border-lime-500/50 hover:text-lime-500 transition"
+                className="flex items-center justify-center gap-2 rounded-lg border border-dark-border px-6 py-3 font-semibold text-dark-primary transition hover:border-lime-500/50 hover:text-lime-500"
               >
-                <Briefcase className="w-4 h-4" /> I'm hiring
+                <Briefcase className="h-4 w-4" /> I'm hiring
               </Link>
             </div>
-
-            {/* Stats */}
-            <div className="flex flex-col sm:flex-row justify-center border-t border-dark-border pt-8">
-              <div className="px-8 py-2">
-                <p className="text-2xl font-bold text-dark-primary">50K+</p>
-                <p className="text-sm text-dark-secondary">Active jobs</p>
-              </div>
-              <div className="px-8 py-2 sm:border-l border-dark-border">
-                <p className="text-2xl font-bold text-dark-primary">1M+</p>
-                <p className="text-sm text-dark-secondary">Job seekers</p>
-              </div>
-              <div className="px-8 py-2 sm:border-l border-dark-border">
-                <p className="text-2xl font-bold text-dark-primary">95%</p>
-                <p className="text-sm text-dark-secondary">Success rate</p>
-              </div>
-            </div>
-
+            <p className="text-sm text-dark-secondary/80">
+              Built for job seekers and employers, from discovery through interview.
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* Social Proof Bar */}
-      <section className="py-8 bg-dark-card border-y border-dark-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-center">
-            <div>
-              <p className="text-3xl font-extrabold text-lime-500">10,000+</p>
-              <p className="text-sm text-dark-secondary">Companies Hiring</p>
-            </div>
-            <div className="hidden sm:block w-px h-10 bg-dark-border" />
-            <div>
-              <p className="text-3xl font-extrabold text-lime-500">5 Days</p>
-              <p className="text-sm text-dark-secondary">Average Time-to-Hire</p>
-            </div>
-            <div className="hidden sm:block w-px h-10 bg-dark-border" />
-            <div>
-              <p className="text-3xl font-extrabold text-lime-500">500K+</p>
-              <p className="text-sm text-dark-secondary">Verified Candidates</p>
-            </div>
-            <div className="hidden sm:block w-px h-10 bg-dark-border" />
-            <div>
-              <p className="text-3xl font-extrabold text-lime-500">92%</p>
-              <p className="text-sm text-dark-secondary">Employer Satisfaction</p>
+          <div className="relative mx-auto w-full max-w-xl lg:ml-auto">
+            <div className="absolute -inset-8 rounded-full bg-orange-500/10 blur-3xl" />
+            <div className="relative min-h-[390px] overflow-hidden rounded-[2rem] border border-dark-border bg-[#211d1a] p-6 shadow-2xl shadow-black/30 sm:min-h-[440px] sm:p-8">
+              <div className="absolute inset-0 opacity-70" style={{ background: 'radial-gradient(circle at 50% 42%, rgba(249, 115, 22, 0.2), transparent 55%)' }} />
+              <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full border border-orange-300/10" />
+              <div className="absolute -right-7 -top-7 h-48 w-48 rounded-full border border-orange-300/10" />
+              <div className="absolute bottom-[-8rem] left-[-5rem] h-72 w-72 rounded-full border border-orange-300/10" />
+
+              <div className="relative z-10 flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">A clearer way forward</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-orange-300">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+              </div>
+
+              <div className="relative z-10 mx-auto mt-8 max-w-sm rounded-2xl border border-white/10 bg-[#2a2521]/90 p-5 shadow-xl backdrop-blur sm:mt-10 sm:p-6">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500 text-[#1c1917] shadow-lg shadow-orange-950/30">
+                    <Briefcase className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-dark-secondary">Your next chapter</p>
+                    <h2 className="text-lg font-bold text-dark-primary">Starts with a good fit.</h2>
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {[
+                    { icon: <Compass className="h-4 w-4" />, title: 'Discover roles', detail: 'Explore opportunities that interest you' },
+                    { icon: <Sparkles className="h-4 w-4" />, title: 'Find your fit', detail: 'See how your experience lines up' },
+                    { icon: <FileText className="h-4 w-4" />, title: 'Move forward', detail: 'Keep applications organized' },
+                  ].map((item, index) => (
+                    <div key={item.title} className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/15 p-3">
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${index === 1 ? 'bg-orange-500/15 text-orange-300' : 'bg-white/5 text-dark-secondary'}`}>
+                        {item.icon}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-dark-primary">{item.title}</p>
+                        <p className="truncate text-xs text-dark-secondary">{item.detail}</p>
+                      </div>
+                      <Check className={`h-4 w-4 shrink-0 ${index === 1 ? 'text-orange-300' : 'text-dark-secondary/50'}`} />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                  <div className="flex -space-x-2">
+                    {['bg-orange-300', 'bg-amber-200', 'bg-rose-300', 'bg-orange-500'].map((color, index) => (
+                      <span key={color} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#2a2521] ${color} text-[#1c1917]`}>
+                        {index === 3 ? <Users className="h-3.5 w-3.5" /> : <UserRound className="h-3.5 w-3.5" />}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-xs text-dark-secondary">Your journey, all in one place</span>
+                </div>
+              </div>
+              <div className="absolute bottom-7 left-5 z-20 hidden items-center gap-2 rounded-full border border-white/10 bg-[#302923] px-3 py-2 text-xs font-medium text-dark-primary shadow-lg sm:flex sm:left-7">
+                <span className="h-2 w-2 rounded-full bg-orange-400" /> Discover what’s next
+              </div>
+              <div className="absolute right-5 top-24 z-20 hidden items-center gap-2 rounded-full border border-white/10 bg-[#302923] px-3 py-2 text-xs font-medium text-dark-primary shadow-lg sm:flex sm:right-7">
+                <Sparkles className="h-3.5 w-3.5 text-orange-300" /> Built around you
+              </div>
             </div>
           </div>
         </div>
@@ -173,7 +200,7 @@ const Landing = () => {
                 <Clock className="text-lime-500 w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2 text-dark-primary">Fast Turnaround</h3>
-              <p className="text-dark-secondary">Stop waiting weeks. Employers on JobHub fill roles in an average of 5 days with pre-vetted candidate matches.</p>
+              <p className="text-dark-secondary">Keep your hiring workflow moving with clear applicant status, direct messaging, and interview scheduling.</p>
             </div>
           </div>
         </div>
@@ -184,22 +211,21 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-dark-primary mb-3">Top Hiring Sectors This Week</h2>
           <p className="text-dark-secondary mb-10">See where demand for talent is growing fastest.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { name: 'Fintech', growth: '+12%', count: '7,920', color: 'bg-lime-500' },
-              { name: 'Healthcare', growth: '+40%', count: '9,410', color: 'bg-lime-600' },
-              { name: 'Marketing', growth: '+2%', count: '4,305', color: 'bg-lime-400' },
-              { name: 'Cloud Computing', growth: '+15%', count: '5,200', color: 'bg-lime-500' },
-            ].map((sector, idx) => (
-              <div key={idx} className="bg-dark-card p-6 rounded-lg border border-dark-border flex items-center justify-between hover:border-lime-500/50 transition">
-                <div>
-                  <h4 className="font-bold text-dark-primary">{sector.name}</h4>
-                  <p className="text-sm text-dark-secondary">{sector.count} Active Candidates</p>
-                </div>
-                <span className={`${sector.color} text-dark-bg text-xs font-bold px-2 py-1 rounded`}>
-                  {sector.growth}
-                </span>
-              </div>
+              { name: 'Software Development', icon: <Briefcase className="h-5 w-5" /> },
+              { name: 'Cloud Computing', icon: <Zap className="h-5 w-5" /> },
+              { name: 'Artificial Intelligence', icon: <Sparkles className="h-5 w-5" /> },
+              { name: 'Marketing', icon: <TrendingUp className="h-5 w-5" /> },
+            ].map(sector => (
+              <Link
+                key={sector.name}
+                to={`/jobs?search=${encodeURIComponent(sector.name)}`}
+                className="group flex items-center justify-between rounded-xl border border-dark-border bg-dark-card p-5 transition hover:-translate-y-0.5 hover:border-lime-500/50"
+              >
+                <span className="font-semibold text-dark-primary">{sector.name}</span>
+                <span className="text-lime-500 transition group-hover:translate-x-1">{sector.icon}</span>
+              </Link>
             ))}
           </div>
         </div>

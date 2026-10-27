@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Building2, Briefcase, Search, X} from 'lucide-react';
 import { FaLinkedin, FaTwitter } from 'react-icons/fa';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const Companies = () => {
   const [companies, setCompanies] = useState([]);

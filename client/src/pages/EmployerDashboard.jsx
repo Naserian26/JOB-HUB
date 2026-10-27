@@ -10,7 +10,7 @@ import {
   LineChart, Line,
 } from 'recharts';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const COLORS = {
   pending:   '#a8a29e', // stone-400

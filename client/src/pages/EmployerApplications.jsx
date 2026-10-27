@@ -6,7 +6,7 @@ import { Users, Download, MessageSquare, MapPin } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
 import { openProtectedFile } from '../utils/openProtectedFile';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const BG_HEADER = '#1c1917';
 const BG_ROW    = '#292524';

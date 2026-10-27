@@ -17,6 +17,9 @@ const notificationsRouter = require('./routes/notifications');
 const messagesRouter = require('./routes/messages');
 const interviewsRouter = require('./routes/interviews');
 const filesRouter = require('./routes/files');
+const savedJobsRouter = require('./routes/savedJobs');
+const savedSearchesRouter = require('./routes/savedSearches');
+const adminRouter = require('./routes/admin');
 // Load environment variables
 dotenv.config();
 
@@ -77,6 +80,9 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/interviews', interviewsRouter);
 app.use('/api/files', filesRouter);
+app.use('/api/saved-jobs', savedJobsRouter);
+app.use('/api/saved-searches', savedSearchesRouter);
+app.use('/api/admin', adminRouter);
     // 5. Health Check
     app.get('/', (req, res) => {
       res.send('JobHub API Running');

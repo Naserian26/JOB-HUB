@@ -4,12 +4,11 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import SeekerLayout from '../components/SeekerLayout';
 import EmployerLayout from '../components/EmployerLayout';
+import { API_URL as API } from '../config';
 import {
   Lock, Mail, Bell, UserMinus, Trash2,
   CheckCircle, AlertCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
-
-const API = 'http://localhost:5000/api/auth';
 
 const Alert = ({ type, message, onClose }) => {
   if (!message) return null;
@@ -82,6 +81,11 @@ const Settings = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [profileVisible, setProfileVisible] = useState(true);
   const [toggleSaving, setToggleSaving] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [smsAlertsEnabled, setSmsAlertsEnabled] = useState(false);
+  const [smsAlertsAvailable, setSmsAlertsAvailable] = useState(false);
+  const [smsSaving, setSmsSaving] = useState(false);
+  const [smsAlert, setSmsAlert] = useState(null);
 
   // Change password
   const [currentPassword, setCurrentPassword] = useState('');
@@ -116,8 +120,11 @@ const Settings = () => {
         const res = await axios.get(`${API}/settings`, { headers: authHeaders });
         setEmailNotifications(res.data.emailNotifications ?? true);
         setProfileVisible(res.data.profileVisible ?? true);
+        setPhoneNumber(res.data.phoneNumber || '');
+        setSmsAlertsEnabled(res.data.smsAlertsEnabled ?? false);
+        setSmsAlertsAvailable(res.data.smsAlertsAvailable ?? false);
       } catch {
-        // silently fail
+        console.error('Failed to load account settings');
       }
     };
     loadSettings();
@@ -138,6 +145,28 @@ const Settings = () => {
     if (field === 'emailNotifications') setEmailNotifications(value);
     if (field === 'profileVisible') setProfileVisible(value);
     saveToggles(field, value);
+  };
+
+  const saveSmsPreferences = async (event) => {
+    event.preventDefault();
+    setSmsAlert(null);
+    setSmsSaving(true);
+    try {
+      const response = await axios.post(`${API}/settings`, {
+        phoneNumber,
+        smsAlertsEnabled,
+      }, { headers });
+      setPhoneNumber(response.data.user.phoneNumber || '');
+      setSmsAlertsEnabled(response.data.user.smsAlertsEnabled);
+      setSmsAlert({ type: 'success', message: 'SMS alert preferences saved.' });
+    } catch (err) {
+      setSmsAlert({
+        type: 'error',
+        message: err.response?.data?.message || 'Could not save SMS alert preferences.',
+      });
+    } finally {
+      setSmsSaving(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -238,13 +267,57 @@ const Settings = () => {
             disabled={toggleSaving}
           />
           {user?.role === 'seeker' && (
-            <Toggle
-              label="Profile Visibility"
-              description="Allow employers to find and view your profile."
-              checked={profileVisible}
-              onChange={(val) => handleToggle('profileVisible', val)}
-              disabled={toggleSaving}
-            />
+            <>
+              <Toggle
+                label="Profile Visibility"
+                description="Allow employers to find and view your profile."
+                checked={profileVisible}
+                onChange={(val) => handleToggle('profileVisible', val)}
+                disabled={toggleSaving}
+              />
+              <form onSubmit={saveSmsPreferences} className="space-y-3 py-4">
+                <Alert
+                  type={smsAlert?.type}
+                  message={smsAlert?.message}
+                  onClose={() => setSmsAlert(null)}
+                />
+                <div>
+                  <label htmlFor="sms-phone-number" className="mb-1.5 block text-sm font-medium text-gray-800">
+                    SMS phone number
+                  </label>
+                  <input
+                    id="sms-phone-number"
+                    type="tel"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={event => setPhoneNumber(event.target.value)}
+                    placeholder="0712345678 or +254712345678"
+                    className={inputClass}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Kenyan mobile numbers are supported.</p>
+                </div>
+                <label className="flex items-start gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={smsAlertsEnabled}
+                    onChange={event => setSmsAlertsEnabled(event.target.checked)}
+                    disabled={(!smsAlertsAvailable && !smsAlertsEnabled) || smsSaving}
+                    className="mt-0.5 accent-indigo-600"
+                  />
+                  <span>
+                    Send me SMS alerts when new jobs match my saved searches.
+                    {!smsAlertsAvailable && (
+                      <span className="mt-1 block text-xs text-amber-700">
+                        SMS delivery is not configured yet. Contact the administrator.
+                      </span>
+                    )}
+                  </span>
+                </label>
+                <button type="submit" disabled={smsSaving} className={btnPrimary}>
+                  {smsSaving ? 'Saving...' : 'Save SMS preferences'}
+                </button>
+              </form>
+            </>
           )}
         </div>
       </Section>

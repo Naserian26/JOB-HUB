@@ -7,7 +7,7 @@ import EmployerLayout from '../components/EmployerLayout';
 import SeekerLayout from '../components/SeekerLayout';
 import { MessageSquare, Send, Loader2, Search, X } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+import { API_URL as API } from '../config';
 
 const getInitials = (name = '') =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);

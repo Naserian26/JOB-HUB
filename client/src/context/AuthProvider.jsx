@@ -39,6 +39,15 @@ export default function AuthProvider({ children }) {
     initSocket(userData.id, token);
   };
 
+  const updateUser = (updates) => {
+    setUser(previous => {
+      if (!previous) return previous;
+      const updatedUser = { ...previous, ...updates };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -47,7 +56,7 @@ export default function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,6 +6,8 @@ const fs = require('fs');
 const CompanyProfile = require('../models/CompanyProfile');
 const Job = require('../models/Job');
 const authenticate = require('../middleware/authenticate');
+const requireApprovedEmployer = require('../middleware/requireApprovedEmployer');
+const authorizeRoles = require('../middleware/authorizeRoles');
 
 // Logo upload
 const logoStorage = multer.diskStorage({
@@ -32,11 +34,21 @@ const uploadLogo = multer({
 router.get('/all', async (req, res) => {
   try {
     const profiles = await CompanyProfile.find()
-      .populate('userId', 'name email')
+      .populate({
+        path: 'userId',
+        select: 'name email role employerApprovalStatus companyName',
+        match: {
+          role: 'employer',
+          $or: [
+            { employerApprovalStatus: 'approved' },
+            { employerApprovalStatus: { $exists: false } },
+          ],
+        },
+      })
       .sort('-createdAt');
 
     const withJobCount = await Promise.all(
-      profiles.map(async (p) => {
+      profiles.filter(profile => profile.userId).map(async (p) => {
         const jobCount = await Job.countDocuments({ employerId: p.userId._id, status: 'active' });
         return { ...p.toObject(), jobCount };
       })
@@ -49,7 +61,7 @@ router.get('/all', async (req, res) => {
 });
 
 // GET /api/company-profile/me
-router.get('/me', authenticate, async (req, res) => {
+router.get('/me', authenticate, authorizeRoles('employer'), requireApprovedEmployer, async (req, res) => {
   try {
     const profile = await CompanyProfile.findOne({ userId: req.user.id });
     if (!profile) return res.status(404).json({ message: 'No company profile found' });
@@ -60,7 +72,7 @@ router.get('/me', authenticate, async (req, res) => {
 });
 
 // POST /api/company-profile — create or update
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, authorizeRoles('employer'), requireApprovedEmployer, async (req, res) => {
   try {
     const existing = await CompanyProfile.findOne({ userId: req.user.id });
     if (existing) {
@@ -76,7 +88,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // POST /api/company-profile/logo
-router.post('/logo', authenticate, uploadLogo.single('logo'), async (req, res) => {
+router.post('/logo', authenticate, authorizeRoles('employer'), requireApprovedEmployer, uploadLogo.single('logo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No logo uploaded' });
     const logoUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/logos/${req.file.filename}`;
