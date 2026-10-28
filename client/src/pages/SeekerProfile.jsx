@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -228,7 +229,7 @@ const SeekerProfile = () => {
       });
       setParsed(res.data);
     } catch (err) {
-      alert(err.response?.data?.message || err.response?.data?.error || 'CV parsing failed.');
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'CV parsing failed.');
     } finally {
       setParsing(false);
     }
@@ -276,7 +277,7 @@ const SeekerProfile = () => {
       setIsEditing(false);
     } catch (error) {
       console.error('Error saving profile', error);
-      alert('Failed to save profile');
+      toast.error('Failed to save profile');
     } finally {
       setSaving(false);
     }

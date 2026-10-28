@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Briefcase, Eye, EyeOff } from 'lucide-react';
@@ -32,7 +33,7 @@ const Register = () => {
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.message || 'Registration failed');
     }
   };
 

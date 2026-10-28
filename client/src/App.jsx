@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 // Pages
 import Landing from './pages/Landing';
@@ -145,6 +146,7 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
+      <Toaster position="top-right" />
       <AuthProvider>
         <Router>
           <AppRoutes />

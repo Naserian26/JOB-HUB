@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { Briefcase, Plus, Eye, Pencil, Trash2 } from 'lucide-react';
 import EmployerLayout from '../components/EmployerLayout';
@@ -27,16 +28,39 @@ const ManageJobs = () => {
     if (user?.token) fetchJobs();
   }, [user?.token]);
 
-  const handleDelete = async (jobId) => {
-    if (!confirm('Are you sure you want to delete this job?')) return;
+  const deleteJob = async (jobId) => {
     try {
       await axios.delete(`${API}/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       setJobs(prev => prev.filter(j => j._id !== jobId));
+      toast.success('Job deleted');
     } catch (err) {
       console.error('Error deleting job', err);
+      toast.error(err.response?.data?.message || 'Failed to delete job');
     }
+  };
+
+  const handleDelete = (jobId) => {
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <span className="text-sm">Are you sure you want to delete this job?</span>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-xs rounded-md border border-gray-300 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { toast.dismiss(t.id); deleteJob(jobId); }}
+            className="px-3 py-1 text-xs rounded-md bg-red-500 text-white hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const handleToggleVisibility = async (jobId, currentStatus) => {

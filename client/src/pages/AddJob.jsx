@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
@@ -48,8 +49,8 @@ const AddJob = () => {
   )];
 
   const nextStep = () => {
-    if (step === 1 && (!formData.title || !formData.salaryMin)) return alert('Please fill required fields');
-    if (step === 2 && !formData.description) return alert('Please add a description');
+    if (step === 1 && (!formData.title || !formData.salaryMin)) return toast.error('Please fill required fields');
+    if (step === 2 && !formData.description) return toast.error('Please add a description');
     setStep(step + 1);
   };
 
@@ -67,11 +68,11 @@ const AddJob = () => {
         headers: { Authorization: `Bearer ${token}` } 
       });
 
-      alert('Job Posted Successfully!');
+      toast.success('Job posted successfully!');
       navigate('/employer/dashboard');
     } catch (error) {
       console.error('Error posting job:', error);
-      alert('Failed to post job');
+      toast.error('Failed to post job');
     }
   };
 

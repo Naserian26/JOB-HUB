@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Briefcase, MapPin, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
@@ -65,7 +66,7 @@ export default function SeekerApplications() {
       }));
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to confirm slot.');
+      toast.error(err.response?.data?.message || 'Failed to confirm slot.');
     } finally {
       setConfirmingId(null);
     }
